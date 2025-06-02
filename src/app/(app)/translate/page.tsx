@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -100,8 +101,14 @@ export default function TranslatePage() {
       toast({ title: 'Summary Generated', description: 'Translation summary created successfully.' });
     } catch (error: any) {
       console.error("Summarization error:", error);
-      setAiError(error.message || 'Failed to generate summary.');
-      toast({ title: 'Summarization Error', description: error.message || 'Could not generate summary.', variant: 'destructive' });
+      let displayMessage = error.message || 'Failed to generate summary.';
+      if (error.message && error.message.includes('503') && (error.message.includes('overloaded') || error.message.includes('Service Unavailable'))) {
+        displayMessage = 'The AI summarization service is currently overloaded or unavailable. Please try again in a few moments.';
+      } else if (error.message && (error.message.includes('API key not valid') || error.message.includes('API_KEY_INVALID'))) {
+        displayMessage = 'The AI service API key is not configured correctly or is invalid. Please check the setup.';
+      }
+      setAiError(displayMessage);
+      toast({ title: 'Summarization Error', description: displayMessage, variant: 'destructive' });
     }
     setIsLoadingSummary(false);
   };
@@ -269,3 +276,5 @@ export default function TranslatePage() {
     </div>
   );
 }
+
+    
