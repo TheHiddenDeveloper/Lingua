@@ -76,7 +76,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.error("Google Sign-In Error:", error);
       let errorMessage = error.message || 'Google Sign-In failed. Please try again.';
       if (error.code === 'auth/popup-closed-by-user') {
-          errorMessage = 'Google Sign-In cancelled by user.';
+          errorMessage = 'The Google Sign-In window was closed before completing the process. Please ensure pop-ups are allowed and try again.';
       } else if (error.code === 'auth/account-exists-with-different-credential') {
           errorMessage = 'An account already exists with this email using a different sign-in method. Try signing in with that method.';
       }
