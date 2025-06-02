@@ -73,6 +73,12 @@ export default function TranslatePage() {
       return;
     }
 
+    const apiKey = process.env.NEXT_PUBLIC_GHANANLP_API_KEY;
+    if (!apiKey) {
+      toast({ title: 'API Key Missing', description: 'Translation API key is not configured.', variant: 'destructive' });
+      return;
+    }
+
     setIsLoadingTranslation(true);
     setSummary(null);
     setAiError(null);
@@ -88,6 +94,7 @@ export default function TranslatePage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Ocp-Apim-Subscription-Key': apiKey,
         },
         body: JSON.stringify({
           in: inputText,
@@ -314,3 +321,4 @@ export default function TranslatePage() {
     </div>
   );
 }
+
