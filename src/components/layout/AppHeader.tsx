@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -5,9 +6,8 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Globe, LogOut, User, Settings2, Minus, Plus, TextIcon } from 'lucide-react';
+import { Globe, LogOut, User, Settings as SettingsIcon, TextIcon } from 'lucide-react'; // Renamed Settings2 to SettingsIcon for clarity
 import { useTextSize } from '@/contexts/TextSizeContext';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function AppHeader() {
   const { user, logout } = useAuth();
@@ -24,7 +24,7 @@ export default function AppHeader() {
           <Globe className="h-7 w-7 text-primary" />
           <span className="font-headline text-xl font-semibold">LinguaGhana</span>
         </Link>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-4">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" aria-label="Adjust text size">
@@ -59,6 +59,12 @@ export default function AppHeader() {
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>{user.email}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                <Link href="/settings" passHref legacyBehavior>
+                  <DropdownMenuItem>
+                    <SettingsIcon className="mr-2 h-4 w-4" />
+                    Settings
+                  </DropdownMenuItem>
+                </Link>
                 <DropdownMenuItem onClick={logout}>
                   <LogOut className="mr-2 h-4 w-4" />
                   Logout
