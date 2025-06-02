@@ -1,8 +1,10 @@
+
 import type { Metadata } from 'next';
 import './globals.css';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { Toaster } from '@/components/ui/toaster';
 import { TextSizeProvider } from '@/contexts/TextSizeContext';
+import { ThemeProvider } from '@/contexts/ThemeContext'; // Import ThemeProvider
 
 export const metadata: Metadata = {
   title: 'LinguaGhana - Translate Ghanaian Languages',
@@ -24,8 +26,10 @@ export default function RootLayout({
       <body className="font-body antialiased">
         <AuthProvider>
           <TextSizeProvider>
-            {children}
-            <Toaster />
+            <ThemeProvider> {/* Wrap with ThemeProvider */}
+              {children}
+              <Toaster />
+            </ThemeProvider>
           </TextSizeProvider>
         </AuthProvider>
       </body>

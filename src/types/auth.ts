@@ -1,3 +1,4 @@
+
 import type { User } from 'firebase/auth';
 
 export interface LoginCredentials {
@@ -9,10 +10,17 @@ export interface SignupCredentials extends LoginCredentials {
   password_confirm?: string; // Optional, if you add password confirmation
 }
 
+export interface UserProfileUpdateData {
+  displayName?: string;
+  // photoURL?: string; // Example, can be added if profile picture update is needed
+}
+
 export interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (credentials: LoginCredentials) => Promise<void>;
   signup: (credentials: SignupCredentials) => Promise<void>;
   logout: () => Promise<void>;
+  updateUserProfile: (data: UserProfileUpdateData) => Promise<void>;
+  sendPasswordReset: () => Promise<void>;
 }

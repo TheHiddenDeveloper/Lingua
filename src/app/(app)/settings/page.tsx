@@ -7,30 +7,59 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/contexts/AuthContext';
-import { useState, type FormEvent } from 'react';
+import { useState, type FormEvent, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useTextSize } from '@/contexts/TextSizeContext';
+import { useTheme } from '@/contexts/ThemeContext'; // Import useTheme
+import { Loader2 } from 'lucide-react';
 
 export default function SettingsPage() {
-  const { user } = useAuth();
+  const { user, updateUserProfile, sendPasswordReset, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const { textSize, setTextSize } = useTextSize();
+  const { theme, setTheme } = useTheme(); // Use theme context
 
-  const [displayName, setDisplayName] = useState(user?.displayName || '');
-  const [email, setEmail] = useState(user?.email || ''); 
+  const [displayName, setDisplayName] = useState('');
+  const [email, setEmail] = useState(''); 
 
-  const handleProfileUpdate = (e: FormEvent) => {
+  useEffect(() => {
+    if (user) {
+      setDisplayName(user.displayName || '');
+      setEmail(user.email || '');
+    }
+  }, [user]);
+
+  const handleProfileUpdate = async (e: FormEvent) => {
     e.preventDefault();
-    toast({ title: 'Profile Update', description: 'Profile update functionality not yet implemented.' });
+    if (!user || !updateUserProfile) {
+      toast({ title: 'Error', description: 'User not available for profile update.', variant: 'destructive' });
+      return;
+    }
+    try {
+      await updateUserProfile({ displayName });
+      // Toast for success is handled within AuthContext
+    } catch (error: any) {
+      // Toast for error is handled within AuthContext, but can be caught here for specific UI changes if needed
+    }
   };
 
-  const handlePasswordChange = () => {
-    toast({ title: 'Password Change', description: 'Password change functionality not yet implemented.' });
+  const handlePasswordChange = async () => {
+    if (!user || !sendPasswordReset) {
+       toast({ title: 'Error', description: 'User not available for password reset.', variant: 'destructive' });
+      return;
+    }
+    try {
+      await sendPasswordReset();
+      // Toast for success/info is handled within AuthContext
+    } catch (error: any) {
+      // Toast for error is handled within AuthContext
+    }
   };
   
-  const handleThemeChange = (theme: string) => {
-     toast({ title: 'Theme Change', description: `Theme set to ${theme} (UI not yet implemented).`});
+  const handleThemeChange = (selectedTheme: string) => {
+     setTheme(selectedTheme as 'light' | 'dark' | 'system');
+     // No toast needed here as the theme change is visual
   };
 
   return (
@@ -75,6 +104,7 @@ export default function SettingsPage() {
                     value={displayName} 
                     onChange={(e) => setDisplayName(e.target.value)} 
                     placeholder="Your Name"
+                    disabled={authLoading}
                   />
                 </div>
                 <div className="space-y-2">
@@ -82,8 +112,12 @@ export default function SettingsPage() {
                   <Input id="email" type="email" value={email} readOnly disabled />
                 </div>
                 <div className="flex flex-col sm:flex-row gap-2">
-                  <Button type="submit">Save Changes</Button>
-                  <Button type="button" variant="outline" onClick={handlePasswordChange}>
+                  <Button type="submit" disabled={authLoading}>
+                    {authLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Save Changes
+                  </Button>
+                  <Button type="button" variant="outline" onClick={handlePasswordChange} disabled={authLoading}>
+                     {authLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Change Password
                   </Button>
                 </div>
@@ -101,7 +135,7 @@ export default function SettingsPage() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="theme">Theme</Label>
-                <Select defaultValue="system" onValueChange={handleThemeChange}>
+                <Select value={theme} onValueChange={handleThemeChange}>
                   <SelectTrigger id="theme" className="w-full sm:w-[200px]">
                     <SelectValue placeholder="Select theme" />
                   </SelectTrigger>
@@ -112,7 +146,7 @@ export default function SettingsPage() {
                   </SelectContent>
                 </Select>
                 <p className="text-sm text-muted-foreground">
-                  Actual theme switching based on this selection is not yet implemented. System theme preference will be used by default.
+                  Choose your preferred theme. &apos;System&apos; will match your operating system&apos;s preference.
                 </p>
               </div>
             </CardContent>
