@@ -10,7 +10,9 @@ import {
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword,
   updateProfile,
-  sendPasswordResetEmail
+  sendPasswordResetEmail,
+  GoogleAuthProvider, // Added
+  signInWithPopup     // Added
 } from 'firebase/auth';
 import type { AuthContextType, LoginCredentials, SignupCredentials, UserProfileUpdateData } from '@/types/auth';
 import { useRouter } from 'next/navigation';
@@ -36,8 +38,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
     try {
       await signInWithEmailAndPassword(auth, credentials.email, credentials.password);
-      router.push('/translate');
-    } finally {
+      // Redirect is handled by useEffect in login/signup pages watching 'user' state
+      // router.push('/translate'); 
+    } catch (error: any) {
+      toast({ title: 'Login Failed', description: error.message || 'An unexpected error occurred.', variant: 'destructive' });
+      throw error; // Re-throw to be caught by calling component if needed
+    }
+    finally {
       setLoading(false);
     }
   };
@@ -46,8 +53,35 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
     try {
       await createUserWithEmailAndPassword(auth, credentials.email, credentials.password);
-      // Note: Firebase automatically signs in the user after successful creation.
-      router.push('/translate');
+      // Redirect is handled by useEffect in login/signup pages watching 'user' state
+      // router.push('/translate');
+    } catch (error: any) {
+      toast({ title: 'Signup Failed', description: error.message || 'An unexpected error occurred.', variant: 'destructive' });
+      throw error; // Re-throw to be caught by calling component if needed
+    } 
+    finally {
+      setLoading(false);
+    }
+  };
+
+  const signInWithGoogle = async () => {
+    setLoading(true);
+    const provider = new GoogleAuthProvider();
+    try {
+      await signInWithPopup(auth, provider);
+      // Redirect is handled by useEffect in login/signup pages watching 'user' state
+      // router.push('/translate'); 
+      toast({ title: 'Signed in with Google', description: 'Successfully signed in with your Google account.' });
+    } catch (error: any) {
+      console.error("Google Sign-In Error:", error);
+      let errorMessage = error.message || 'Google Sign-In failed. Please try again.';
+      if (error.code === 'auth/popup-closed-by-user') {
+          errorMessage = 'Google Sign-In cancelled by user.';
+      } else if (error.code === 'auth/account-exists-with-different-credential') {
+          errorMessage = 'An account already exists with this email using a different sign-in method. Try signing in with that method.';
+      }
+      toast({ title: 'Google Sign-In Error', description: errorMessage, variant: 'destructive' });
+      // Do not re-throw, error is handled by toast
     } finally {
       setLoading(false);
     }
@@ -58,24 +92,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       await firebaseSignOut(auth);
       router.push('/login');
-    } finally {
+    } catch (error: any) {
+      toast({ title: 'Logout Failed', description: error.message || 'An unexpected error occurred.', variant: 'destructive' });
+    }
+    finally {
       setLoading(false);
     }
   };
 
   const updateUserProfile = async (data: UserProfileUpdateData) => {
     if (!auth.currentUser) {
+      toast({ title: 'Authentication Error', description: 'User not authenticated.', variant: 'destructive'});
       throw new Error('User not authenticated.');
     }
     setLoading(true);
     try {
       await updateProfile(auth.currentUser, data);
-      // Update local user state to reflect changes immediately
       setUser(auth.currentUser ? { ...auth.currentUser } : null);
       toast({ title: 'Profile Updated', description: 'Your profile has been successfully updated.' });
     } catch (error: any) {
       toast({ title: 'Profile Update Failed', description: error.message, variant: 'destructive' });
-      throw error; // Re-throw to be caught by calling component if needed
+      throw error; 
     } finally {
       setLoading(false);
     }
@@ -83,6 +120,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const sendPasswordReset = async () => {
     if (!auth.currentUser || !auth.currentUser.email) {
+      toast({ title: 'Error', description: 'User not authenticated or email not available for password reset.', variant: 'destructive'});
       throw new Error('User not authenticated or email not available.');
     }
     setLoading(true);
@@ -97,7 +135,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const value = { user, loading, login, signup, logout, updateUserProfile, sendPasswordReset };
+  const value = { user, loading, login, signup, logout, updateUserProfile, sendPasswordReset, signInWithGoogle };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
@@ -109,3 +147,4 @@ export const useAuth = (): AuthContextType => {
   }
   return context;
 };
+

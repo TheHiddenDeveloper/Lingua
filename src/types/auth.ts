@@ -23,4 +23,6 @@ export interface AuthContextType {
   logout: () => Promise<void>;
   updateUserProfile: (data: UserProfileUpdateData) => Promise<void>;
   sendPasswordReset: () => Promise<void>;
+  signInWithGoogle: () => Promise<void>; // Added for Google Sign-In
 }
+
