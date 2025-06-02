@@ -17,7 +17,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 const supportedLanguages = [
   { code: 'en', name: 'English', localName: 'English' },
   { code: 'tw', name: 'Twi', localName: 'Twi' },
-  { code: 'ga', name: 'Ga', localName: 'Ga' },
+  { code: 'ga', name: 'Ga', localName: 'Ga' }, // API uses 'gaa'
   { code: 'dag', name: 'Dagbani', localName: 'Dagbani' },
   { code: 'ee', name: 'Ewe', localName: 'Ewe' },
 ];
@@ -28,7 +28,7 @@ const langToBCP47 = (langCode: string): string => {
     case 'en': return 'en-US';
     case 'tw': return 'ak-GH'; // Akan (Twi is a dialect of Akan)
     case 'ga': return 'ga-GH';
-    case 'dag': return 'dag-GH'; // No specific BCP 47 for Dagbani, using generic. Might need testing.
+    case 'dag': return 'dag-GH';
     case 'ee': return 'ee-GH';
     default: return 'en-US';
   }
@@ -68,21 +68,56 @@ export default function TranslatePage() {
       toast({ title: 'Input Required', description: 'Please enter text to translate.', variant: 'destructive' });
       return;
     }
+    if (inputText.length > 1000) {
+      toast({ title: 'Input Too Long', description: 'Input text must be 1000 characters or less.', variant: 'destructive' });
+      return;
+    }
+
     setIsLoadingTranslation(true);
-    setSummary(null); // Clear previous summary
+    setSummary(null);
     setAiError(null);
-    
-    // Simulate API call
-    // In a real app, replace this with:
-    // const response = await fetch('/api/translate', { method: 'POST', body: JSON.stringify({ text: inputText, source: sourceLang, target: targetLang }) });
-    // const data = await response.json();
-    // setOutputText(data.translatedText);
-    await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
-    const mockTranslatedText = `Translated (${sourceLang} to ${targetLang}): ${inputText.split('').reverse().join('')}`;
-    setOutputText(mockTranslatedText);
-    
+    setOutputText(''); // Clear previous output
+
+    // API uses 'gaa' for Ga, app uses 'ga'. Map 'ga' to 'gaa'.
+    const apiSourceLang = sourceLang === 'ga' ? 'gaa' : sourceLang;
+    const apiTargetLang = targetLang === 'ga' ? 'gaa' : targetLang;
+    const langPair = `${apiSourceLang}-${apiTargetLang}`;
+
+    try {
+      const response = await fetch('https://translation-api.ghananlp.org/v1/translate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          in: inputText,
+          lang: langPair,
+        }),
+      });
+
+      if (response.ok) {
+        const translatedText = await response.text(); // Successful response is a plain string
+        setOutputText(translatedText);
+        toast({ title: 'Translation Complete', description: 'Text translated successfully.' });
+      } else {
+        let errorData;
+        try {
+            errorData = await response.json(); // Try to parse as JSON error object
+        } catch (e) {
+            // If not JSON, or some other error during parsing, use status text or a generic message
+            errorData = { message: response.statusText || `Translation failed with status: ${response.status}` };
+        }
+        const errorMessage = errorData?.message || 'Unknown translation error occurred.';
+        toast({ title: 'Translation Error', description: errorMessage, variant: 'destructive' });
+        setOutputText(''); // Clear output on error
+      }
+    } catch (error: any) {
+      console.error("Translation API call error:", error);
+      toast({ title: 'Translation Failed', description: error.message || 'An unexpected error occurred while contacting the translation service.', variant: 'destructive' });
+      setOutputText(''); // Clear output on error
+    }
+
     setIsLoadingTranslation(false);
-    toast({ title: 'Translation Complete', description: 'Text translated successfully.' });
   };
 
   const handleSummarize = async () => {
@@ -99,7 +134,8 @@ export default function TranslatePage() {
       const result: SummarizeTranslationOutput = await summarizeTranslation(input);
       setSummary(result.summary);
       toast({ title: 'Summary Generated', description: 'Translation summary created successfully.' });
-    } catch (error: any) {
+    } catch (error: any)
+    {
       console.error("Summarization error:", error);
       let displayMessage = error.message || 'Failed to generate summary.';
       if (error.message && error.message.includes('503') && (error.message.includes('overloaded') || error.message.includes('Service Unavailable'))) {
@@ -121,6 +157,7 @@ export default function TranslatePage() {
     if (isListening) {
       stopListening();
     } else {
+      setInputText(''); // Clear input text when starting new voice input
       startListening(langToBCP47(sourceLang));
     }
   };
@@ -143,7 +180,7 @@ export default function TranslatePage() {
     const tempLang = sourceLang;
     setSourceLang(targetLang);
     setTargetLang(tempLang);
-    // Optionally swap text as well
+    // Optionally swap text as well, though often users want to re-translate or type new input
     // const tempText = inputText;
     // setInputText(outputText);
     // setOutputText(tempText);
@@ -174,11 +211,12 @@ export default function TranslatePage() {
           </CardHeader>
           <CardContent>
             <Textarea
-              placeholder="Enter text to translate..."
+              placeholder="Enter text to translate (max 1000 chars)..."
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               className="min-h-[150px] text-base"
               aria-label="Input text for translation"
+              maxLength={1000}
             />
             <Button 
               variant="outline" 
@@ -276,5 +314,3 @@ export default function TranslatePage() {
     </div>
   );
 }
-
-    
