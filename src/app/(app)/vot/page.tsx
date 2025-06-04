@@ -22,15 +22,14 @@ export default function VoiceToTextGhanaNLPPage() {
   const [isRecording, setIsRecording] = useState(false);
   const [transcribedText, setTranscribedText] = useState('');
   const [isLoading, setIsLoading] = useState(false); // For API call, not for mic permission
-  const [pageError, setPageError] = useState<string | null>(null); // Renamed from 'error' to avoid conflict
+  const [pageError, setPageError] = useState<string | null>(null); 
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
-  const audioStreamRef = useRef<MediaStream | null>(null); // To keep track of the stream for stopping
+  const audioStreamRef = useRef<MediaStream | null>(null); 
   const { toast } = useToast();
   const apiKey = process.env.NEXT_PUBLIC_GHANANLP_API_KEY;
 
-  // Determine a supported MIME type
   const getSupportedMimeType = () => {
     const types = [
       'audio/webm;codecs=opus',
@@ -39,24 +38,23 @@ export default function VoiceToTextGhanaNLPPage() {
       'audio/ogg',
     ];
     for (const type of types) {
-      if (MediaRecorder.isTypeSupported(type)) {
+      if (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported(type)) {
         return type;
       }
     }
-    return ''; // Fallback to browser default if none of the preferred are supported
+    return ''; 
   };
   const mimeType = getSupportedMimeType();
 
   useEffect(() => {
     if (!apiKey) {
-      setPageError("API key is missing. Cannot use Voice-to-Text service.");
+      setPageError("API key is missing. Please configure NEXT_PUBLIC_GHANANLP_API_KEY in your environment variables. Voice-to-Text service cannot be used.");
       toast({ title: 'Configuration Error', description: 'GhanaNLP API key is not configured.', variant: 'destructive' });
     }
     if (typeof window !== 'undefined' && (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia)) {
       setPageError("Microphone access is not supported by your browser.");
       toast({ title: 'Browser Incompatible', description: 'Microphone access (getUserMedia) is not supported.', variant: 'destructive' });
     }
-    // Log if no specific preferred mimeType is found, but don't block functionality as browser might still record.
     if (mimeType === '') {
         console.warn("No explicitly preferred MIME type found for MediaRecorder. Using browser default. This might affect API compatibility if GhanaNLP API is strict about audio format.");
     }
@@ -64,12 +62,17 @@ export default function VoiceToTextGhanaNLPPage() {
 
   const startRecordingProcess = async () => {
     if (isRecording || typeof window === 'undefined' || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
+    if (!apiKey) {
+        setPageError("API key is missing. Cannot start recording.");
+        toast({ title: 'Configuration Error', description: 'GhanaNLP API key is not configured.', variant: 'destructive' });
+        return;
+    }
     setPageError(null);
     setTranscribedText(''); 
     
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      audioStreamRef.current = stream; // Store the stream
+      audioStreamRef.current = stream; 
       
       const options = mimeType ? { mimeType } : undefined;
       mediaRecorderRef.current = new MediaRecorder(stream, options);
@@ -85,7 +88,6 @@ export default function VoiceToTextGhanaNLPPage() {
         const audioBlob = new Blob(audioChunksRef.current, { type: mimeType || audioChunksRef.current[0]?.type || 'audio/webm' });
         audioChunksRef.current = []; 
 
-        // Tracks are already stopped by stopRecordingProcess, but as a fallback:
         if (audioStreamRef.current) {
             audioStreamRef.current.getTracks().forEach(track => track.stop());
             audioStreamRef.current = null;
@@ -102,9 +104,9 @@ export default function VoiceToTextGhanaNLPPage() {
       };
       
       mediaRecorderRef.current.onerror = (event: Event) => {
-        const mediaRecorderError = event as any; // MediaRecorderErrorEvent is not standard
+        const mediaRecorderError = event as any; 
         console.error("MediaRecorder error:", mediaRecorderError.error || mediaRecorderError);
-        setPageError(`MediaRecorder error: ${mediaRecorderError.error?.name || 'Unknown error'}`);
+        setPageError(`MediaRecorder error: ${mediaRecorderError.error?.name || 'Unknown error during recording.'}`);
         toast({ title: "Recording Error", description: `An error occurred during recording: ${mediaRecorderError.error?.name || 'Please try again.'}`, variant: "destructive"});
         setIsRecording(false);
         setIsLoading(false);
@@ -135,8 +137,7 @@ export default function VoiceToTextGhanaNLPPage() {
 
   const stopRecordingProcess = () => {
     if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop(); // This will trigger onstop
-      // Stop media stream tracks to turn off microphone indicator
+      mediaRecorderRef.current.stop(); 
       if (audioStreamRef.current) {
         audioStreamRef.current.getTracks().forEach(track => track.stop());
         audioStreamRef.current = null;
@@ -149,7 +150,7 @@ export default function VoiceToTextGhanaNLPPage() {
   
   const transcribeAudio = async (audioBlob: Blob) => {
     if (!apiKey) {
-      setPageError("API key is missing.");
+      setPageError("API key is missing. Cannot transcribe.");
       toast({ title: 'API Error', description: 'GhanaNLP API key is not configured.', variant: 'destructive' });
       setIsLoading(false);
       return;
@@ -160,10 +161,6 @@ export default function VoiceToTextGhanaNLPPage() {
     const apiUrl = `https://translation-api.ghananlp.org/asr/v2/transcribe?language=${selectedLanguage}`;
     
     try {
-      // The API expects raw binary audio. Content-Type should be an audio type.
-      // MediaRecorder typically produces 'audio/webm' or 'audio/ogg'.
-      // The API docs mention 'audio/mpeg'. If the API is strict, it might reject 'audio/webm'.
-      // For now, we use the type from the blob.
       const blobType = mimeType || audioBlob.type || 'audio/webm';
 
       const response = await fetch(apiUrl, {
@@ -181,7 +178,7 @@ export default function VoiceToTextGhanaNLPPage() {
         toast({ title: "Transcription Successful" });
       } else {
         let errorData;
-        let errorMessage = `Transcription failed with status: ${response.status} ${response.statusText}`;
+        let errorMessage = `Transcription API call failed with status: ${response.status} ${response.statusText}`;
         try {
             const contentType = response.headers.get("content-type");
             if (contentType && contentType.includes("application/json")) {
@@ -192,10 +189,16 @@ export default function VoiceToTextGhanaNLPPage() {
                 errorMessage = errorData || errorMessage;
             }
         } catch (e) {
-           // error parsing error response
+            console.error("Error parsing API error response:", e);
         }
+        
         console.error("Transcription API error response:", errorMessage);
-        setPageError(`API Error: ${errorMessage.substring(0, 300)}`); // Truncate long messages
+        
+        if (errorMessage.toLowerCase().includes('invalid subscription key')) {
+          setPageError(`API Key Error: ${errorMessage}. Please check your NEXT_PUBLIC_GHANANLP_API_KEY in the environment variables and ensure it's active and has permissions for the ASR service.`);
+        } else {
+          setPageError(`API Error: ${errorMessage.substring(0, 300)}`);
+        }
         toast({ title: 'Transcription Error', description: errorMessage.substring(0, 100), variant: 'destructive' });
       }
     } catch (err: any) {
@@ -223,7 +226,7 @@ export default function VoiceToTextGhanaNLPPage() {
       </div>
 
       {pageError && (
-        <Alert variant="destructive">
+        <Alert variant="destructive" className="my-4">
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>Error</AlertTitle>
           <AlertDescription>{pageError}</AlertDescription>
@@ -234,34 +237,12 @@ export default function VoiceToTextGhanaNLPPage() {
         <CardHeader>
           <CardTitle>Transcribe Audio</CardTitle>
           <CardDescription>
-            {supportedApiLanguages.length > 1 ? "Select a language, then " : ""}
             Click {isRecording ? "'Stop Recording'" : "'Start Recording'"} to {isRecording ? "finish" : "begin"}.
-            (Language is currently set to Twi)
+            (Language is currently set to Twi for transcription)
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-col sm:flex-row gap-4 items-center">
-            {/* Language selector can be re-enabled if API supports more for ASR */}
-            {/* 
-            {supportedApiLanguages.length > 1 && ( 
-              <Select 
-                value={selectedLanguage} 
-                onValueChange={setSelectedLanguage}
-                disabled={isRecording || isLoading}
-              >
-                <SelectTrigger className="w-full sm:w-[280px]">
-                  <SelectValue placeholder="Select language" />
-                </SelectTrigger>
-                <SelectContent>
-                  {supportedApiLanguages.map(lang => (
-                    <SelectItem key={lang.code} value={lang.code}>
-                      {lang.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-            */}
              <Button 
               onClick={handleToggleRecording} 
               disabled={isLoading || !apiKey || (typeof window !== 'undefined' && (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia))}
@@ -274,7 +255,7 @@ export default function VoiceToTextGhanaNLPPage() {
             </Button>
           </div>
           
-          {isLoading && !isRecording && ( // Show "Transcribing..." only when API call is happening
+          {isLoading && !isRecording && ( 
              <div className="flex items-center justify-center p-4">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 <p className="ml-2 text-muted-foreground">Transcribing...</p>
