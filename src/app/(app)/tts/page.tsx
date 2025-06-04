@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -75,8 +74,8 @@ export default function TextToSpeechPage() {
         throw new Error(errorResponseMessage);
       }
       const data = await response.json(); 
-      const apiLangsFromServer = data.languages;
       // Ensure supportedApiLangCodes is an array, even if apiLangsFromServer is not.
+      const apiLangsFromServer = data.languages;
       const supportedApiLangCodes = Array.isArray(apiLangsFromServer) ? apiLangsFromServer : [];
       
       const filteredAppLanguages = PRD_LANGUAGES_SUPPORTED_BY_TTS.filter(prdLang => 
@@ -87,6 +86,7 @@ export default function TextToSpeechPage() {
       if (filteredAppLanguages.length > 0) {
         setSelectedLanguageCode(filteredAppLanguages[0].code);
       } else {
+        console.log('Full API response for languages endpoint (data):', data); // Added for diagnostics
         const apiLangsString = supportedApiLangCodes.length > 0 ? supportedApiLangCodes.join(', ') : 'none provided by API';
         const errorMessage = `The app is configured for Twi and Ewe Text-to-Speech. However, these languages were not found in the list of supported languages returned by the GhanaNLP API. ` +
                              `The API reported supporting: [${apiLangsString}]. Please verify your GhanaNLP API key and ensure it has permissions for TTS. If the issue persists, contact GhanaNLP support.`;
@@ -313,4 +313,3 @@ export default function TextToSpeechPage() {
     </div>
   );
 }
-
