@@ -10,7 +10,7 @@ import { Volume2, Loader2, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
-import { Label } from '@/components/ui/label'; // Added missing import
+import { Label } from '@/components/ui/label';
 
 interface ApiLanguage {
   code: string;
@@ -68,7 +68,10 @@ export default function TextToSpeechPage() {
       const data = await response.json(); // Expects { "languages": ["tw", "ki", "ee"] }
       
       // Filter API languages against PRD-defined supported languages for LinguaGhana
-      const supportedApiLangCodes = data.languages || [];
+      const apiLangsFromServer = data.languages;
+      // Ensure supportedApiLangCodes is an array, even if apiLangsFromServer is not.
+      const supportedApiLangCodes = Array.isArray(apiLangsFromServer) ? apiLangsFromServer : [];
+      
       const filteredAppLanguages = PRD_LANGUAGES_SUPPORTED_BY_TTS.filter(prdLang => 
         supportedApiLangCodes.includes(prdLang.code)
       );
@@ -294,3 +297,4 @@ export default function TextToSpeechPage() {
     </div>
   );
 }
+
