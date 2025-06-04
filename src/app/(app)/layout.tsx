@@ -1,14 +1,29 @@
+
 'use client';
 
 import { useEffect, type ReactNode } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
+import Link from 'next/link';
 import AppHeader from '@/components/layout/AppHeader';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import { 
+  SidebarProvider, 
+  Sidebar, 
+  SidebarHeader, 
+  SidebarContent, 
+  SidebarMenu, 
+  SidebarMenuItem, 
+  SidebarMenuButton, 
+  SidebarInset,
+  SidebarTrigger // This is usually in the AppHeader, but if Sidebar is defined here, it needs its parts
+} from '@/components/ui/sidebar';
+import { Languages, Volume2, Mic, Settings, LogOut, PanelLeft } from 'lucide-react';
 
 export default function AppLayout({ children }: { children: ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user, loading, logout } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     if (!loading && !user) {
@@ -18,25 +33,96 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-background">
         <LoadingSpinner size="lg" />
       </div>
     );
   }
 
   if (!user) {
-    // This state should ideally not be reached due to the redirect,
-    // but it's a fallback.
     return null; 
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <AppHeader />
-      <main className="flex-1">{children}</main>
-      <footer className="py-4 text-center text-sm text-muted-foreground">
-        © {new Date().getFullYear()} LinguaGhana. All rights reserved.
-      </footer>
-    </div>
+    <SidebarProvider defaultOpen={true}>
+      <div className="flex min-h-screen bg-background">
+        <Sidebar collapsible="icon" className="border-r">
+          <SidebarHeader className="p-4">
+            <Link href="/translate" className="flex items-center gap-2">
+               {/* Mobile trigger for sidebar, as AppHeader is inside SidebarInset */}
+              <div className="md:hidden">
+                <SidebarTrigger asChild>
+                  <PanelLeft />
+                </SidebarTrigger>
+              </div>
+              <h2 className="font-headline text-lg font-semibold text-primary group-data-[collapsible=icon]:hidden">LinguaGhana</h2>
+            </Link>
+          </SidebarHeader>
+          <SidebarContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton 
+                  asChild 
+                  isActive={pathname === '/translate'} 
+                  tooltip={{content: "Translator", side: "right", align: "center"}}
+                >
+                  <Link href="/translate">
+                    <Languages className="h-5 w-5" />
+                    <span className="group-data-[collapsible=icon]:hidden">Translator</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton 
+                  asChild 
+                  isActive={pathname === '/tts'}
+                  tooltip={{content: "Text-to-Speech", side: "right", align: "center"}}
+                >
+                  <Link href="/tts">
+                    <Volume2 className="h-5 w-5" />
+                    <span className="group-data-[collapsible=icon]:hidden">Text-to-Speech</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton 
+                  asChild 
+                  isActive={pathname === '/vot'}
+                  tooltip={{content: "Voice-to-Text", side: "right", align: "center"}}
+                >
+                  <Link href="/vot">
+                    <Mic className="h-5 w-5" />
+                    <span className="group-data-[collapsible=icon]:hidden">Voice-to-Text</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton 
+                  asChild 
+                  isActive={pathname === '/settings'}
+                  tooltip={{content: "Settings", side: "right", align: "center"}}
+                >
+                  <Link href="/settings">
+                    <Settings className="h-5 w-5" />
+                    <span className="group-data-[collapsible=icon]:hidden">Settings</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarContent>
+          {/* Footer can be added here if needed for sidebar */}
+        </Sidebar>
+
+        <SidebarInset className="flex-1 flex flex-col">
+          <AppHeader />
+          <main className="flex-1 p-4 md:p-6 overflow-auto"> 
+            {children}
+          </main>
+          <footer className="py-4 text-center text-sm text-muted-foreground border-t">
+            © {new Date().getFullYear()} LinguaGhana. All rights reserved.
+          </footer>
+        </SidebarInset>
+      </div>
+    </SidebarProvider>
   );
 }
