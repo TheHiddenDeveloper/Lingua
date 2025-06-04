@@ -73,8 +73,7 @@ export default function TextToSpeechPage() {
       }
       const data = await response.json(); 
       
-      // Extract language codes from the keys of the `data.languages` object
-      const apiLangObject = data.languages;
+      const apiLangObject = data.languages; // This is an object like { "tw": "Twi", ... }
       const supportedApiLangCodes = apiLangObject && typeof apiLangObject === 'object' ? Object.keys(apiLangObject) : [];
       
       const filteredAppLanguages = PRD_LANGUAGES_SUPPORTED_BY_TTS.filter(prdLang => 
@@ -118,11 +117,10 @@ export default function TextToSpeechPage() {
         headers: { 'Ocp-Apim-Subscription-Key': apiKey },
       });
       if (!response.ok) {
-        throw new Error(`Failed to fetch speakers: ${response.statusText}`);
+        throw new Error(`Failed to fetch speakers: ${response.statusText} (Status: ${response.status})`);
       }
       const data = await response.json();
-      // Access the nested 'speakers' object from the API response
-      setAllSpeakers(data.speakers || {});
+      setAllSpeakers(data.speakers || {}); // API returns { "speakers": { "Twi": [...] } }
     } catch (err: any) {
       setError(`Error fetching speakers: ${err.message}`);
       toast({ title: 'API Error', description: `Could not load speakers: ${err.message}`, variant: 'destructive' });
@@ -139,7 +137,6 @@ export default function TextToSpeechPage() {
   useEffect(() => {
     if (selectedLanguageCode && allSpeakers) {
       const currentLangObject = availableLanguages.find(lang => lang.code === selectedLanguageCode);
-      // Use apiName from currentLangObject (e.g. "Twi") to lookup in allSpeakers
       const speakersForLang = currentLangObject ? allSpeakers[currentLangObject.apiName] || [] : [];
       setFilteredSpeakers(speakersForLang);
       if (speakersForLang.length > 0) {
@@ -169,6 +166,10 @@ export default function TextToSpeechPage() {
 
     setIsSynthesizing(true);
     setError(null);
+    // Revoke previous object URL to free up resources, if one exists
+    if (audioSrc) {
+      URL.revokeObjectURL(audioSrc);
+    }
     setAudioSrc(null); 
 
     try {
@@ -180,19 +181,35 @@ export default function TextToSpeechPage() {
         },
         body: JSON.stringify({
           text: textToSpeak,
-          language: selectedLanguageCode, // API expects language code e.g. 'tw'
+          language: selectedLanguageCode, 
           speaker_id: selectedSpeakerId,
         }),
       });
 
-      if (response.ok) {
+      const contentType = response.headers.get('Content-Type');
+
+      if (response.ok && contentType && contentType.includes('audio/wav')) {
         const audioBlob = await response.blob();
-        const audioUrl = URL.createObjectURL(audioBlob);
+        // Ensure the blob type is explicitly 'audio/wav'
+        const typedAudioBlob = new Blob([audioBlob], { type: 'audio/wav' });
+        const audioUrl = URL.createObjectURL(typedAudioBlob);
         setAudioSrc(audioUrl);
         toast({ title: 'Speech Synthesized', description: 'Audio ready to play.' });
       } else {
-        const errorData = await response.json().catch(() => ({ message: `Synthesis failed with status: ${response.status}` }));
-        throw new Error(errorData.message || `Synthesis failed: ${response.statusText}`);
+        // Handle non-audio responses (likely errors)
+        let errorMessage = `Synthesis failed with status: ${response.status}`;
+        if (contentType && contentType.includes('application/json')) {
+          try {
+            const errorData = await response.json();
+            errorMessage = errorData.message || errorData.detail || errorMessage;
+          } catch (e) { /* Ignore if parsing errorData fails */ }
+        } else {
+          try {
+            const errorText = await response.text();
+            errorMessage = errorText || errorMessage;
+          } catch (e) { /* Ignore if reading text fails */ }
+        }
+        throw new Error(errorMessage);
       }
     } catch (err: any) {
       setError(`Synthesis error: ${err.message}`);
@@ -201,14 +218,26 @@ export default function TextToSpeechPage() {
       setIsSynthesizing(false);
     }
   };
+  
+  // Cleanup object URL when component unmounts or audioSrc changes
+  useEffect(() => {
+    return () => {
+      if (audioSrc) {
+        URL.revokeObjectURL(audioSrc);
+      }
+    };
+  }, [audioSrc]);
+
 
   const handleLanguageChange = (newLangCode: string) => {
     setSelectedLanguageCode(newLangCode);
+     if (audioSrc) URL.revokeObjectURL(audioSrc);
     setAudioSrc(null); 
   };
   
   const handleSpeakerChange = (newSpeakerId: string) => {
     setSelectedSpeakerId(newSpeakerId);
+    if (audioSrc) URL.revokeObjectURL(audioSrc);
     setAudioSrc(null);
   }
 
@@ -302,7 +331,7 @@ export default function TextToSpeechPage() {
           {audioSrc && (
             <div className="mt-4">
               <Label>Generated Audio:</Label>
-              <audio controls src={audioSrc} className="w-full mt-1" aria-label="Synthesized audio player">
+              <audio key={audioSrc} controls src={audioSrc} className="w-full mt-1" aria-label="Synthesized audio player">
                 Your browser does not support the audio element.
               </audio>
             </div>
