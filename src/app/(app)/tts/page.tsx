@@ -10,6 +10,7 @@ import { Volume2, Loader2, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import { Label } from '@/components/ui/label'; // Added missing import
 
 interface ApiLanguage {
   code: string;
@@ -293,5 +294,3 @@ export default function TextToSpeechPage() {
     </div>
   );
 }
-
-    
