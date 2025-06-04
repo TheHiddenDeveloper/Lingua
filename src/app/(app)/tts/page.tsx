@@ -63,11 +63,18 @@ export default function TextToSpeechPage() {
         headers: { 'Ocp-Apim-Subscription-Key': apiKey },
       });
       if (!response.ok) {
-        throw new Error(`Failed to fetch languages: ${response.statusText}`);
+        let errorResponseMessage = `Failed to fetch languages: ${response.statusText} (Status: ${response.status})`;
+        try {
+          const errorData = await response.json();
+          if (errorData && errorData.message) {
+            errorResponseMessage = `Failed to fetch languages: ${errorData.message} (Status: ${response.status})`;
+          }
+        } catch (e) {
+          // Ignore if error response is not JSON
+        }
+        throw new Error(errorResponseMessage);
       }
-      const data = await response.json(); // Expects { "languages": ["tw", "ki", "ee"] }
-      
-      // Filter API languages against PRD-defined supported languages for LinguaGhana
+      const data = await response.json(); 
       const apiLangsFromServer = data.languages;
       // Ensure supportedApiLangCodes is an array, even if apiLangsFromServer is not.
       const supportedApiLangCodes = Array.isArray(apiLangsFromServer) ? apiLangsFromServer : [];
@@ -80,7 +87,16 @@ export default function TextToSpeechPage() {
       if (filteredAppLanguages.length > 0) {
         setSelectedLanguageCode(filteredAppLanguages[0].code);
       } else {
-        setError("No supported languages available from the API that match app's configuration.");
+        const apiLangsString = supportedApiLangCodes.length > 0 ? supportedApiLangCodes.join(', ') : 'none provided by API';
+        const errorMessage = `The app is configured for Twi and Ewe Text-to-Speech. However, these languages were not found in the list of supported languages returned by the GhanaNLP API. ` +
+                             `The API reported supporting: [${apiLangsString}]. Please verify your GhanaNLP API key and ensure it has permissions for TTS. If the issue persists, contact GhanaNLP support.`;
+        setError(errorMessage);
+        toast({
+            title: 'Language Configuration Issue',
+            description: `App requires Twi/Ewe for TTS. API supports: [${apiLangsString}]. Check key/permissions.`,
+            variant: 'warning',
+            duration: 10000 
+         });
       }
 
     } catch (err: any) {
