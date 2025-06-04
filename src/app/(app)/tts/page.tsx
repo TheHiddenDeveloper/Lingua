@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -12,8 +13,8 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { Label } from '@/components/ui/label';
 
 interface ApiLanguage {
-  code: string;
-  name: string; // User-friendly name
+  code: string; // e.g., 'tw', 'ee'
+  name: string; // User-friendly name e.g., Twi
   apiName: string; // Name used as key in speakers object, e.g. "Twi"
 }
 
@@ -21,12 +22,9 @@ interface ApiSpeakersData {
   [key: string]: string[]; // e.g. { "Twi": ["twi_speaker_4", ...], "Ewe": [...] }
 }
 
-// Define which languages from PRD are supported by GhanaNLP TTS
 const PRD_LANGUAGES_SUPPORTED_BY_TTS: ApiLanguage[] = [
   { code: 'tw', name: 'Twi', apiName: 'Twi' },
   { code: 'ee', name: 'Ewe', apiName: 'Ewe' },
-  // Note: Kikuyu ('ki') is supported by API but not in LinguaGhana PRD core.
-  // English, Ga, Dagbani from PRD are not listed in GhanaNLP TTS API docs.
 ];
 
 
@@ -74,9 +72,10 @@ export default function TextToSpeechPage() {
         throw new Error(errorResponseMessage);
       }
       const data = await response.json(); 
-      // Ensure supportedApiLangCodes is an array, even if apiLangsFromServer is not.
-      const apiLangsFromServer = data.languages;
-      const supportedApiLangCodes = Array.isArray(apiLangsFromServer) ? apiLangsFromServer : [];
+      
+      // Extract language codes from the keys of the `data.languages` object
+      const apiLangObject = data.languages;
+      const supportedApiLangCodes = apiLangObject && typeof apiLangObject === 'object' ? Object.keys(apiLangObject) : [];
       
       const filteredAppLanguages = PRD_LANGUAGES_SUPPORTED_BY_TTS.filter(prdLang => 
         supportedApiLangCodes.includes(prdLang.code)
@@ -86,14 +85,14 @@ export default function TextToSpeechPage() {
       if (filteredAppLanguages.length > 0) {
         setSelectedLanguageCode(filteredAppLanguages[0].code);
       } else {
-        console.log('Full API response for languages endpoint (data):', data); // Added for diagnostics
+        console.log('Full API response for languages endpoint (data.languages):', data.languages); 
         const apiLangsString = supportedApiLangCodes.length > 0 ? supportedApiLangCodes.join(', ') : 'none provided by API';
-        const errorMessage = `The app is configured for Twi and Ewe Text-to-Speech. However, these languages were not found in the list of supported languages returned by the GhanaNLP API. ` +
-                             `The API reported supporting: [${apiLangsString}]. Please verify your GhanaNLP API key and ensure it has permissions for TTS. If the issue persists, contact GhanaNLP support.`;
+        const errorMessage = `The app is configured for Twi and Ewe Text-to-Speech. However, these languages (codes: 'tw', 'ee') were not found in the list of supported language codes returned by the GhanaNLP API. ` +
+                             `The API reported supporting codes: [${apiLangsString}]. Please verify your GhanaNLP API key and ensure it has permissions for TTS. If the issue persists, contact GhanaNLP support.`;
         setError(errorMessage);
         toast({
             title: 'Language Configuration Issue',
-            description: `App requires Twi/Ewe for TTS. API supports: [${apiLangsString}]. Check key/permissions.`,
+            description: `App requires Twi/Ewe for TTS. API supports codes: [${apiLangsString}]. Check key/permissions.`,
             variant: 'warning',
             duration: 10000 
          });
@@ -110,7 +109,6 @@ export default function TextToSpeechPage() {
   const fetchSpeakers = useCallback(async () => {
     if (!apiKey) {
       setError("API key is missing. Cannot fetch speakers.");
-      // Toast already shown by fetchLanguages if API key is missing
       return;
     }
     setIsLoadingSpeakers(true);
@@ -122,8 +120,9 @@ export default function TextToSpeechPage() {
       if (!response.ok) {
         throw new Error(`Failed to fetch speakers: ${response.statusText}`);
       }
-      const data: ApiSpeakersData = await response.json();
-      setAllSpeakers(data);
+      const data = await response.json();
+      // Access the nested 'speakers' object from the API response
+      setAllSpeakers(data.speakers || {});
     } catch (err: any) {
       setError(`Error fetching speakers: ${err.message}`);
       toast({ title: 'API Error', description: `Could not load speakers: ${err.message}`, variant: 'destructive' });
@@ -140,6 +139,7 @@ export default function TextToSpeechPage() {
   useEffect(() => {
     if (selectedLanguageCode && allSpeakers) {
       const currentLangObject = availableLanguages.find(lang => lang.code === selectedLanguageCode);
+      // Use apiName from currentLangObject (e.g. "Twi") to lookup in allSpeakers
       const speakersForLang = currentLangObject ? allSpeakers[currentLangObject.apiName] || [] : [];
       setFilteredSpeakers(speakersForLang);
       if (speakersForLang.length > 0) {
@@ -169,7 +169,7 @@ export default function TextToSpeechPage() {
 
     setIsSynthesizing(true);
     setError(null);
-    setAudioSrc(null); // Clear previous audio
+    setAudioSrc(null); 
 
     try {
       const response = await fetch('https://translation-api.ghananlp.org/tts/v1/synthesize', {
@@ -180,7 +180,7 @@ export default function TextToSpeechPage() {
         },
         body: JSON.stringify({
           text: textToSpeak,
-          language: selectedLanguageCode,
+          language: selectedLanguageCode, // API expects language code e.g. 'tw'
           speaker_id: selectedSpeakerId,
         }),
       });
@@ -204,13 +204,12 @@ export default function TextToSpeechPage() {
 
   const handleLanguageChange = (newLangCode: string) => {
     setSelectedLanguageCode(newLangCode);
-    // Speaker will be updated by useEffect dependency
-    setAudioSrc(null); // Clear audio if language changes
+    setAudioSrc(null); 
   };
   
   const handleSpeakerChange = (newSpeakerId: string) => {
     setSelectedSpeakerId(newSpeakerId);
-    setAudioSrc(null); // Clear audio if speaker changes
+    setAudioSrc(null);
   }
 
 
@@ -313,3 +312,4 @@ export default function TextToSpeechPage() {
     </div>
   );
 }
+
