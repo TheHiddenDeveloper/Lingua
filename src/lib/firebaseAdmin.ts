@@ -9,11 +9,22 @@ let adminTimestampFn: () => admin.firestore.FieldValue;
 if (!admin.apps.length) {
   try {
     console.log('Firebase Admin SDK: No apps initialized. Attempting to initializeApp()...');
+    
+    // Diagnostic log:
+    console.log('DEBUG: GOOGLE_APPLICATION_CREDENTIALS value is: ', process.env.GOOGLE_APPLICATION_CREDENTIALS);
+
+    if (!process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+      console.error('ERROR: GOOGLE_APPLICATION_CREDENTIALS environment variable is not set or is empty.');
+      throw new Error('GOOGLE_APPLICATION_CREDENTIALS environment variable is not set.');
+    }
+    
     // When running in a Firebase environment (like Cloud Functions or App Hosting),
     // the SDK automatically discovers credentials.
     // For local development, ensure GOOGLE_APPLICATION_CREDENTIALS environment variable
     // is set to the path of your service account key JSON file.
-    admin.initializeApp(); // Relies on GOOGLE_APPLICATION_CREDENTIALS or Firebase Hosting env
+    admin.initializeApp({
+        credential: admin.credential.applicationDefault(),
+    }); 
     console.log('Firebase Admin SDK initialized successfully (new instance).');
     
     // Assign services from the newly initialized default app
@@ -25,6 +36,8 @@ if (!admin.apps.length) {
     let detailedErrorMessage = `Firebase Admin SDK initialization failed: ${error.message}. Server-side Firebase operations will not be available. `;
     if (error.message && error.message.toLowerCase().includes("cannot read properties of undefined (reading 'internal')")) {
       detailedErrorMessage += "This specific error often means the GOOGLE_APPLICATION_CREDENTIALS environment variable is missing, pointing to an invalid/inaccessible file, or the JSON file is corrupted. Please double-check this variable and the service account key file.";
+    } else if (error.message && error.message.toLowerCase().includes("google_application_credentials environment variable is not set")) {
+      detailedErrorMessage += "The GOOGLE_APPLICATION_CREDENTIALS environment variable was not detected by the Admin SDK. Ensure it's set correctly in your .env or .env.local file and that your server process has been restarted.";
     } else {
       detailedErrorMessage += "Please ensure that GOOGLE_APPLICATION_CREDENTIALS is set correctly in your environment variables if you are running this locally (e.g., in your .env or .env.local file, pointing to your service account JSON key file). If running in a deployed Firebase environment, ensure the runtime service account has the necessary IAM permissions (e.g., 'Firebase Admin SDK Administrator Service Agent' or specific roles like 'Cloud Datastore User').";
     }
@@ -47,3 +60,4 @@ if (!admin.apps.length) {
 export const adminDb = adminDbInstance;
 export const adminAuth = adminAuthInstance;
 export const adminTimestamp = adminTimestampFn;
+
