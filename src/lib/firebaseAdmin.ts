@@ -13,7 +13,7 @@ if (!admin.apps.length) {
 
   try {
     console.log('Firebase Admin SDK: No apps initialized. Attempting to initializeApp()...');
-    const credPathFromEnv = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+    const credPathFromEnv = "/home/user/studio/linguaghana-umat-firebase-adminsdk-fbsvc-bd179614fc.json";
     console.log(`Firebase Admin SDK DEBUG: GOOGLE_APPLICATION_CREDENTIALS value from env: '${credPathFromEnv}'`);
     const currentWorkingDirectory = process.cwd();
     console.log(`Firebase Admin SDK DEBUG: Current working directory (process.cwd()): '${currentWorkingDirectory}'`);
