@@ -8,18 +8,20 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Volume2, Loader2, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext'; // Import useAuth
+import { logTextToSpeech } from '@/ai/flows/log-history-flow'; // Import history logging
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { Label } from '@/components/ui/label';
 
 interface ApiLanguage {
-  code: string; // e.g., 'tw', 'ee'
-  name: string; // User-friendly name e.g., Twi
-  apiName: string; // Name used as key in speakers object, e.g. "Twi"
+  code: string; 
+  name: string; 
+  apiName: string; 
 }
 
 interface ApiSpeakersData {
-  [key: string]: string[]; // e.g. { "Twi": ["twi_speaker_4", ...], "Ewe": [...] }
+  [key: string]: string[]; 
 }
 
 const PRD_LANGUAGES_SUPPORTED_BY_TTS: ApiLanguage[] = [
@@ -45,6 +47,7 @@ export default function TextToSpeechPage() {
   const [error, setError] = useState<string | null>(null);
 
   const { toast } = useToast();
+  const { user } = useAuth(); // Get current user
   const apiKey = process.env.NEXT_PUBLIC_GHANANLP_API_KEY;
 
   const fetchLanguages = useCallback(async () => {
@@ -72,6 +75,7 @@ export default function TextToSpeechPage() {
         throw new Error(errorResponseMessage);
       }
       const data = await response.json(); 
+      console.log('Full API response for languages endpoint (data.languages):', data.languages); 
       
       const apiLangObject = data.languages; // This is an object like { "tw": "Twi", ... }
       const supportedApiLangCodes = apiLangObject && typeof apiLangObject === 'object' ? Object.keys(apiLangObject) : [];
@@ -84,7 +88,6 @@ export default function TextToSpeechPage() {
       if (filteredAppLanguages.length > 0) {
         setSelectedLanguageCode(filteredAppLanguages[0].code);
       } else {
-        console.log('Full API response for languages endpoint (data.languages):', data.languages); 
         const apiLangsString = supportedApiLangCodes.length > 0 ? supportedApiLangCodes.join(', ') : 'none provided by API';
         const errorMessage = `The app is configured for Twi and Ewe Text-to-Speech. However, these languages (codes: 'tw', 'ee') were not found in the list of supported language codes returned by the GhanaNLP API. ` +
                              `The API reported supporting codes: [${apiLangsString}]. Please verify your GhanaNLP API key and ensure it has permissions for TTS. If the issue persists, contact GhanaNLP support.`;
@@ -120,7 +123,7 @@ export default function TextToSpeechPage() {
         throw new Error(`Failed to fetch speakers: ${response.statusText} (Status: ${response.status})`);
       }
       const data = await response.json();
-      setAllSpeakers(data.speakers || {}); // API returns { "speakers": { "Twi": [...] } }
+      setAllSpeakers(data.speakers || {}); 
     } catch (err: any) {
       setError(`Error fetching speakers: ${err.message}`);
       toast({ title: 'API Error', description: `Could not load speakers: ${err.message}`, variant: 'destructive' });
@@ -166,7 +169,6 @@ export default function TextToSpeechPage() {
 
     setIsSynthesizing(true);
     setError(null);
-    // Revoke previous object URL to free up resources, if one exists
     if (audioSrc) {
       URL.revokeObjectURL(audioSrc);
     }
@@ -190,13 +192,26 @@ export default function TextToSpeechPage() {
 
       if (response.ok && contentType && contentType.includes('audio/wav')) {
         const audioBlob = await response.blob();
-        // Ensure the blob type is explicitly 'audio/wav'
         const typedAudioBlob = new Blob([audioBlob], { type: 'audio/wav' });
         const audioUrl = URL.createObjectURL(typedAudioBlob);
         setAudioSrc(audioUrl);
         toast({ title: 'Speech Synthesized', description: 'Audio ready to play.' });
+
+        // Log TTS to history
+        if (user && user.uid) {
+            try {
+              await logTextToSpeech({
+                userId: user.uid,
+                spokenText: textToSpeak,
+                selectedLanguage: selectedLanguageCode,
+                speakerId: selectedSpeakerId,
+              });
+            } catch (logError: any) {
+              console.error("Failed to log TTS history:", logError);
+            }
+          }
+
       } else {
-        // Handle non-audio responses (likely errors)
         let errorMessage = `Synthesis failed with status: ${response.status}`;
         if (contentType && contentType.includes('application/json')) {
           try {
@@ -219,7 +234,6 @@ export default function TextToSpeechPage() {
     }
   };
   
-  // Cleanup object URL when component unmounts or audioSrc changes
   useEffect(() => {
     return () => {
       if (audioSrc) {
@@ -341,4 +355,3 @@ export default function TextToSpeechPage() {
     </div>
   );
 }
-

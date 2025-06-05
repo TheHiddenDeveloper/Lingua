@@ -16,9 +16,9 @@ import {
   SidebarMenuItem, 
   SidebarMenuButton, 
   SidebarInset,
-  SidebarTrigger // This is usually in the AppHeader, but if Sidebar is defined here, it needs its parts
+  SidebarTrigger
 } from '@/components/ui/sidebar';
-import { Languages, Volume2, Mic, Settings, LogOut, PanelLeft } from 'lucide-react';
+import { Languages, Volume2, Mic, Settings, LogOut, PanelLeft, History } from 'lucide-react'; // Added History
 
 export default function AppLayout({ children }: { children: ReactNode }) {
   const { user, loading, logout } = useAuth();
@@ -49,7 +49,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         <Sidebar collapsible="icon" className="border-r">
           <SidebarHeader className="p-4">
             <Link href="/translate" className="flex items-center gap-2">
-               {/* Mobile trigger for sidebar, as AppHeader is inside SidebarInset */}
               <div className="md:hidden">
                 <SidebarTrigger asChild>
                   <PanelLeft />
@@ -99,6 +98,18 @@ export default function AppLayout({ children }: { children: ReactNode }) {
               <SidebarMenuItem>
                 <SidebarMenuButton 
                   asChild 
+                  isActive={pathname === '/history'}
+                  tooltip={{content: "Activity History", side: "right", align: "center"}}
+                >
+                  <Link href="/history">
+                    <History className="h-5 w-5" />
+                    <span className="group-data-[collapsible=icon]:hidden">History</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton 
+                  asChild 
                   isActive={pathname === '/settings'}
                   tooltip={{content: "Settings", side: "right", align: "center"}}
                 >
@@ -110,7 +121,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarContent>
-          {/* Footer can be added here if needed for sidebar */}
         </Sidebar>
 
         <SidebarInset className="flex-1 flex flex-col">

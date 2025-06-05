@@ -8,26 +8,27 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Mic, Loader2, AlertTriangle, StopCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext'; // Import useAuth
+import { logVoiceToText } from '@/ai/flows/log-history-flow'; // Import history logging
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
-// According to docs, ASR API supports Twi ('tw')
 const supportedApiLanguages = [
   { code: 'tw', name: 'Twi' },
-  // Add other languages here if the ASR API supports them and you want to enable them
 ];
 
 export default function VoiceToTextGhanaNLPPage() {
   const [selectedLanguage, setSelectedLanguage] = useState('tw');
   const [isRecording, setIsRecording] = useState(false);
   const [transcribedText, setTranscribedText] = useState('');
-  const [isLoading, setIsLoading] = useState(false); // For API call, not for mic permission
+  const [isLoading, setIsLoading] = useState(false); 
   const [pageError, setPageError] = useState<string | null>(null); 
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const audioStreamRef = useRef<MediaStream | null>(null); 
   const { toast } = useToast();
+  const { user } = useAuth(); // Get current user
   const apiKey = process.env.NEXT_PUBLIC_GHANANLP_API_KEY;
 
   const getSupportedMimeType = () => {
@@ -58,6 +59,16 @@ export default function VoiceToTextGhanaNLPPage() {
     if (mimeType === '') {
         console.warn("No explicitly preferred MIME type found for MediaRecorder. Using browser default. This might affect API compatibility if GhanaNLP API is strict about audio format.");
     }
+    // Cleanup function to stop media stream if component unmounts while recording
+    return () => {
+        if (audioStreamRef.current) {
+            audioStreamRef.current.getTracks().forEach(track => track.stop());
+            audioStreamRef.current = null;
+        }
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+            mediaRecorderRef.current.stop();
+        }
+    };
   }, [apiKey, toast, mimeType]);
 
   const startRecordingProcess = async () => {
@@ -85,7 +96,8 @@ export default function VoiceToTextGhanaNLPPage() {
       };
 
       mediaRecorderRef.current.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: mimeType || audioChunksRef.current[0]?.type || 'audio/webm' });
+        const recordedMimeType = mediaRecorderRef.current?.mimeType || audioChunksRef.current[0]?.type || 'audio/webm';
+        const audioBlob = new Blob(audioChunksRef.current, { type: recordedMimeType });
         audioChunksRef.current = []; 
 
         if (audioStreamRef.current) {
@@ -100,7 +112,7 @@ export default function VoiceToTextGhanaNLPPage() {
             return;
         }
         
-        await transcribeAudio(audioBlob);
+        await transcribeAudio(audioBlob, recordedMimeType);
       };
       
       mediaRecorderRef.current.onerror = (event: Event) => {
@@ -138,17 +150,14 @@ export default function VoiceToTextGhanaNLPPage() {
   const stopRecordingProcess = () => {
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop(); 
-      if (audioStreamRef.current) {
-        audioStreamRef.current.getTracks().forEach(track => track.stop());
-        audioStreamRef.current = null;
-      }
+      // Stream tracks are stopped in onstop to ensure data is processed
       setIsRecording(false);
       setIsLoading(true); 
       toast({ title: "Recording Stopped", description: "Processing audio..." });
     }
   };
   
-  const transcribeAudio = async (audioBlob: Blob) => {
+  const transcribeAudio = async (audioBlob: Blob, blobType: string) => {
     if (!apiKey) {
       setPageError("API key is missing. Cannot transcribe.");
       toast({ title: 'API Error', description: 'GhanaNLP API key is not configured.', variant: 'destructive' });
@@ -161,8 +170,6 @@ export default function VoiceToTextGhanaNLPPage() {
     const apiUrl = `https://translation-api.ghananlp.org/asr/v1/transcribe?language=${selectedLanguage}`;
     
     try {
-      const blobType = mimeType || audioBlob.type || 'audio/webm';
-
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
@@ -176,6 +183,20 @@ export default function VoiceToTextGhanaNLPPage() {
         const resultText = await response.text(); 
         setTranscribedText(resultText);
         toast({ title: "Transcription Successful" });
+
+        // Log VOT to history
+        if (user && user.uid && resultText) {
+            try {
+              await logVoiceToText({
+                userId: user.uid,
+                recognizedSpeech: resultText,
+                detectedLanguage: selectedLanguage,
+              });
+            } catch (logError: any) {
+              console.error("Failed to log VOT history:", logError);
+            }
+          }
+
       } else {
         let errorData;
         let errorMessage = `Transcription API call failed with status: ${response.status} ${response.statusText}`;
@@ -194,10 +215,8 @@ export default function VoiceToTextGhanaNLPPage() {
         
         console.error("Transcription API error response:", errorMessage);
         
-        if (errorMessage.toLowerCase().includes('invalid subscription key')) {
-          setPageError(`API Key Error: ${errorMessage}. Please check your NEXT_PUBLIC_GHANANLP_API_KEY in the environment variables and ensure it's active and has permissions for the ASR service.`);
-        } else if (errorMessage.toLowerCase().includes('access denied')) {
-            setPageError(`API Access Denied: ${errorMessage}. This might be due to an invalid API key or insufficient permissions for the ASR service. Please verify your key and its entitlements.`);
+        if (errorMessage.toLowerCase().includes('invalid subscription key') || errorMessage.toLowerCase().includes('access denied')) {
+          setPageError(`API Key Error: ${errorMessage}. Please check your NEXT_PUBLIC_GHANANLP_API_KEY and its permissions for the ASR service.`);
         }
         else {
           setPageError(`API Error: ${errorMessage.substring(0, 300)}`);
@@ -240,13 +259,22 @@ export default function VoiceToTextGhanaNLPPage() {
         <CardHeader>
           <CardTitle>Transcribe Audio</CardTitle>
           <CardDescription>
-            Click {isRecording ? "'Stop Recording'" : "'Start Recording'"} to {isRecording ? "finish" : "begin"}.
-            (Language is currently set to Twi for transcription)
+            Select language, then click {isRecording ? "'Stop Recording'" : "'Start Recording'"} to {isRecording ? "finish" : "begin"}.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex flex-col sm:flex-row gap-4 items-center">
-             <Button 
+        <div className="flex flex-col sm:flex-row gap-4 items-center">
+            <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
+                <SelectTrigger className="w-full sm:w-[180px]">
+                    <SelectValue placeholder="Select language" />
+                </SelectTrigger>
+                <SelectContent>
+                    {supportedApiLanguages.map(lang => (
+                    <SelectItem key={lang.code} value={lang.code}>{lang.name}</SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+            <Button 
               onClick={handleToggleRecording} 
               disabled={isLoading || !apiKey || (typeof window !== 'undefined' && (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia))}
               className={`w-full btn-animated ${isRecording ? 'bg-destructive hover:bg-destructive/90' : ''}`}

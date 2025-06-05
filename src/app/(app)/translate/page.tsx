@@ -11,6 +11,8 @@ import { useToast } from '@/hooks/use-toast';
 import useSpeechRecognition from '@/hooks/useSpeechRecognition';
 import useTextToSpeech from '@/hooks/useTextToSpeech';
 import { summarizeTranslation, type SummarizeTranslationInput, type SummarizeTranslationOutput } from '@/ai/flows/summarize-translation';
+import { logTextTranslation } from '@/ai/flows/log-history-flow'; // Import history logging
+import { useAuth } from '@/contexts/AuthContext'; // Import useAuth
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
@@ -45,6 +47,7 @@ export default function TranslatePage() {
   const [aiError, setAiError] = useState<string | null>(null);
 
   const { toast } = useToast();
+  const { user } = useAuth(); // Get current user
   const { isListening, transcript, startListening, stopListening, error: sttError, browserSupportsSpeechRecognition } = useSpeechRecognition();
   const { isSpeaking, speak, cancel: cancelSpeech, error: ttsError, browserSupportsTextToSpeech } = useTextToSpeech();
 
@@ -82,9 +85,8 @@ export default function TranslatePage() {
     setIsLoadingTranslation(true);
     setSummary(null);
     setAiError(null);
-    setOutputText(''); // Clear previous output
+    setOutputText(''); 
 
-    // API uses 'gaa' for Ga, app uses 'ga'. Map 'ga' to 'gaa'.
     const apiSourceLang = sourceLang === 'ga' ? 'gaa' : sourceLang;
     const apiTargetLang = targetLang === 'ga' ? 'gaa' : targetLang;
     const langPair = `${apiSourceLang}-${apiTargetLang}`;
@@ -103,25 +105,41 @@ export default function TranslatePage() {
       });
 
       if (response.ok) {
-        const translatedText = await response.text(); // Successful response is a plain string
+        const translatedText = await response.text(); 
         setOutputText(translatedText);
         toast({ title: 'Translation Complete', description: 'Text translated successfully.' });
+
+        // Log translation to history
+        if (user && user.uid) {
+          try {
+            await logTextTranslation({
+              userId: user.uid,
+              originalText: inputText,
+              translatedText: translatedText,
+              sourceLanguage: sourceLang,
+              targetLanguage: targetLang,
+            });
+          } catch (logError: any) {
+            console.error("Failed to log translation history:", logError);
+            // Optionally toast a silent failure for history logging
+          }
+        }
+
       } else {
         let errorData;
         try {
-            errorData = await response.json(); // Try to parse as JSON error object
+            errorData = await response.json(); 
         } catch (e) {
-            // If not JSON, or some other error during parsing, use status text or a generic message
             errorData = { message: response.statusText || `Translation failed with status: ${response.status}` };
         }
         const errorMessage = errorData?.message || 'Unknown translation error occurred.';
         toast({ title: 'Translation Error', description: errorMessage, variant: 'destructive' });
-        setOutputText(''); // Clear output on error
+        setOutputText(''); 
       }
     } catch (error: any) {
       console.error("Translation API call error:", error);
       toast({ title: 'Translation Failed', description: error.message || 'An unexpected error occurred while contacting the translation service.', variant: 'destructive' });
-      setOutputText(''); // Clear output on error
+      setOutputText(''); 
     }
 
     setIsLoadingTranslation(false);
@@ -164,7 +182,7 @@ export default function TranslatePage() {
     if (isListening) {
       stopListening();
     } else {
-      setInputText(''); // Clear input text when starting new voice input
+      setInputText(''); 
       startListening(langToBCP47(sourceLang));
     }
   };
@@ -187,10 +205,6 @@ export default function TranslatePage() {
     const tempLang = sourceLang;
     setSourceLang(targetLang);
     setTargetLang(tempLang);
-    // Optionally swap text as well, though often users want to re-translate or type new input
-    // const tempText = inputText;
-    // setInputText(outputText);
-    // setOutputText(tempText);
   };
 
 
@@ -321,4 +335,3 @@ export default function TranslatePage() {
     </div>
   );
 }
-
