@@ -158,7 +158,7 @@ export default function VoiceToTextGhanaNLPPage() {
     setIsLoading(true);
     setPageError(null);
 
-    const apiUrl = `https://translation-api.ghananlp.org/asr/v2/transcribe?language=${selectedLanguage}`;
+    const apiUrl = `https://translation-api.ghananlp.org/asr/v1/transcribe?language=${selectedLanguage}`;
     
     try {
       const blobType = mimeType || audioBlob.type || 'audio/webm';
@@ -196,7 +196,10 @@ export default function VoiceToTextGhanaNLPPage() {
         
         if (errorMessage.toLowerCase().includes('invalid subscription key')) {
           setPageError(`API Key Error: ${errorMessage}. Please check your NEXT_PUBLIC_GHANANLP_API_KEY in the environment variables and ensure it's active and has permissions for the ASR service.`);
-        } else {
+        } else if (errorMessage.toLowerCase().includes('access denied')) {
+            setPageError(`API Access Denied: ${errorMessage}. This might be due to an invalid API key or insufficient permissions for the ASR service. Please verify your key and its entitlements.`);
+        }
+        else {
           setPageError(`API Error: ${errorMessage.substring(0, 300)}`);
         }
         toast({ title: 'Transcription Error', description: errorMessage.substring(0, 100), variant: 'destructive' });
