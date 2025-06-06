@@ -15,7 +15,6 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Label } from '@/components/ui/label';
 
-// Reusing supported languages from translation, assuming summarizer supports them or notes language.
 const supportedLanguages = [
   { code: 'en', name: 'English' },
   { code: 'tw', name: 'Twi' },
@@ -24,7 +23,7 @@ const supportedLanguages = [
   { code: 'ee', name: 'Ewe' },
 ];
 
-const MAX_INPUT_LENGTH = 5000; // Character limit for input text
+const MAX_INPUT_LENGTH = 5000;
 
 export default function SummaryPage() {
   const [inputText, setInputText] = useState('');
@@ -62,24 +61,15 @@ export default function SummaryPage() {
       setSummary(result.summary);
       toast({ title: 'Summary Generated', description: 'Text summarized successfully.' });
 
-      // Log summary to history
       if (user.uid && result.summary) {
         try {
-          await logTextSummary({
-            userId: user.uid,
-            originalText: inputText,
-            summarizedText: result.summary,
-            language: languageName,
-          });
-        } catch (logError: any) {
-          console.error("Failed to log summary history:", logError);
-          // Optionally toast a silent failure for history logging
-        }
+          await logTextSummary({ userId: user.uid, originalText: inputText, summarizedText: result.summary, language: languageName });
+        } catch (logError: any) { console.error("Failed to log summary history:", logError); }
       }
     } catch (err: any) {
       console.error("Summarization error:", err);
       let displayMessage = err.message || 'Failed to generate summary.';
-      if (err.message && err.message.includes('model response was blocked') ) {
+      if (err.message && err.message.includes('model response was blocked')) {
          displayMessage = 'The AI model blocked the response, possibly due to safety filters. Please try modifying your input text.';
       } else if (err.message && (err.message.includes('API key not valid') || err.message.includes('API_KEY_INVALID'))) {
         displayMessage = 'The AI service API key is not configured correctly or is invalid. Please check the setup.';
@@ -102,12 +92,9 @@ export default function SummaryPage() {
     if (!summary) return;
     if (navigator.share) {
       try {
-        await navigator.share({
-          title: 'Text Summary',
-          text: summary,
-        });
+        await navigator.share({ title: 'Text Summary', text: summary });
       } catch (err: any) {
-        if (err.name !== 'AbortError') { // AbortError is common if user cancels share dialog
+        if (err.name !== 'AbortError') {
           toast({ title: 'Share Failed', description: 'Could not share summary.', variant: 'destructive' });
         }
       }
@@ -120,7 +107,7 @@ export default function SummaryPage() {
     <div className="container mx-auto p-4 md:p-8 flex flex-col gap-6">
       <div className="text-center">
         <h1 className="font-headline text-3xl md:text-4xl font-bold">AI Text Summarizer</h1>
-        <p className="text-muted-foreground mt-2">Get concise summaries of your long-form text content.</p>
+        <p className="text-muted-foreground mt-1 md:mt-2">Get concise summaries of your long-form text content.</p>
       </div>
 
       {error && (
@@ -140,13 +127,13 @@ export default function SummaryPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <Label htmlFor="input-text-area">Your Text:</Label>
+            <Label htmlFor="input-text-area" className="sr-only">Your Text:</Label>
             <Textarea
               id="input-text-area"
               placeholder="Paste your article, essay, or transcript here..."
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
-              className="min-h-[200px] text-base mt-1"
+              className="min-h-[150px] sm:min-h-[200px] text-base"
               aria-label="Input text for summarization"
               maxLength={MAX_INPUT_LENGTH}
             />
@@ -155,33 +142,34 @@ export default function SummaryPage() {
             </p>
           </div>
 
-          <div>
-            <Label htmlFor="language-select">Language of Input Text:</Label>
-            <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
-              <SelectTrigger id="language-select" className="w-full sm:w-[200px] mt-1">
-                <SelectValue placeholder="Select language" />
-              </SelectTrigger>
-              <SelectContent>
-                {supportedLanguages.map(lang => (
-                  <SelectItem key={lang.code} value={lang.code}>{lang.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="flex flex-col sm:flex-row gap-4 items-center">
+            <div className="w-full sm:w-auto">
+                <Label htmlFor="language-select">Language of Input Text:</Label>
+                <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
+                <SelectTrigger id="language-select" className="w-full sm:w-[200px] mt-1">
+                    <SelectValue placeholder="Select language" />
+                </SelectTrigger>
+                <SelectContent>
+                    {supportedLanguages.map(lang => (
+                    <SelectItem key={lang.code} value={lang.code}>{lang.name}</SelectItem>
+                    ))}
+                </SelectContent>
+                </Select>
+            </div>
+            <Button onClick={handleSummarize} disabled={isLoading || !inputText.trim()} size="lg" className="w-full sm:w-auto btn-animated mt-2 sm:mt-0 self-end sm:self-auto">
+                {isLoading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <FileText className="mr-2 h-5 w-5" />}
+                Summarize Text
+            </Button>
           </div>
-
-          <Button onClick={handleSummarize} disabled={isLoading || !inputText.trim()} size="lg" className="min-w-[180px] btn-animated">
-            {isLoading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <FileText className="mr-2 h-5 w-5" />}
-            Summarize Text
-          </Button>
         </CardContent>
       </Card>
 
       {summary && (
         <Card className="mt-6 card-animated">
           <CardHeader>
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
               <CardTitle className="font-headline text-xl">Generated Summary</CardTitle>
-              <div className="flex gap-2">
+              <div className="flex gap-2 self-end sm:self-auto">
                 <Button variant="outline" size="icon" onClick={handleCopySummary} aria-label="Copy summary">
                   <Copy className="h-4 w-4" />
                 </Button>
@@ -194,7 +182,7 @@ export default function SummaryPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <ScrollArea className="h-[200px] w-full rounded-md border p-4 bg-muted/20">
+            <ScrollArea className="h-[150px] sm:h-[200px] w-full rounded-md border p-4 bg-muted/20">
               <p className="text-sm whitespace-pre-wrap">{summary}</p>
             </ScrollArea>
           </CardContent>

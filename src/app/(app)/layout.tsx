@@ -7,18 +7,18 @@ import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import AppHeader from '@/components/layout/AppHeader';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
-import { 
-  SidebarProvider, 
-  Sidebar, 
-  SidebarHeader, 
-  SidebarContent, 
-  SidebarMenu, 
-  SidebarMenuItem, 
-  SidebarMenuButton, 
+import {
+  SidebarProvider,
+  Sidebar,
+  SidebarHeader,
+  SidebarContent,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
   SidebarInset,
-  SidebarTrigger
+  // SidebarTrigger // No longer need explicit trigger here for mobile, AppHeader handles it
 } from '@/components/ui/sidebar';
-import { Languages, Volume2, Mic, Settings, History, PanelLeft, FileText } from 'lucide-react'; // Added History, FileText
+import { Languages, Volume2, Mic, Settings, History, PanelLeft, FileText, Globe } from 'lucide-react';
 
 export default function AppLayout({ children }: { children: ReactNode }) {
   const { user, loading, logout } = useAuth();
@@ -40,7 +40,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   }
 
   if (!user) {
-    return null; 
+    return null;
   }
 
   return (
@@ -49,20 +49,17 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         <Sidebar collapsible="icon" className="border-r">
           <SidebarHeader className="p-4">
             <Link href="/translate" className="flex items-center gap-2">
-              <div className="md:hidden">
-                <SidebarTrigger asChild>
-                  <PanelLeft />
-                </SidebarTrigger>
-              </div>
+              {/* LinguaGhana title/logo area in sidebar - mobile trigger is now in AppHeader */}
+              <Globe className="h-7 w-7 text-primary md:h-6 md:w-6" /> {/* Icon for sidebar header */}
               <h2 className="font-headline text-lg font-semibold text-primary group-data-[collapsible=icon]:hidden">LinguaGhana</h2>
             </Link>
           </SidebarHeader>
           <SidebarContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton 
-                  asChild 
-                  isActive={pathname === '/translate'} 
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname === '/translate'}
                   tooltip={{content: "Translator", side: "right", align: "center"}}
                 >
                   <Link href="/translate">
@@ -72,8 +69,8 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                 </SidebarMenuButton>
               </SidebarMenuItem>
                <SidebarMenuItem>
-                <SidebarMenuButton 
-                  asChild 
+                <SidebarMenuButton
+                  asChild
                   isActive={pathname === '/summary'}
                   tooltip={{content: "AI Summarizer", side: "right", align: "center"}}
                 >
@@ -84,8 +81,8 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton 
-                  asChild 
+                <SidebarMenuButton
+                  asChild
                   isActive={pathname === '/tts'}
                   tooltip={{content: "Text-to-Speech", side: "right", align: "center"}}
                 >
@@ -96,8 +93,8 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton 
-                  asChild 
+                <SidebarMenuButton
+                  asChild
                   isActive={pathname === '/vot'}
                   tooltip={{content: "Voice-to-Text", side: "right", align: "center"}}
                 >
@@ -108,8 +105,8 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton 
-                  asChild 
+                <SidebarMenuButton
+                  asChild
                   isActive={pathname === '/history'}
                   tooltip={{content: "Activity History", side: "right", align: "center"}}
                 >
@@ -120,8 +117,8 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton 
-                  asChild 
+                <SidebarMenuButton
+                  asChild
                   isActive={pathname === '/settings'}
                   tooltip={{content: "Settings", side: "right", align: "center"}}
                 >
@@ -137,7 +134,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
         <SidebarInset className="flex-1 flex flex-col">
           <AppHeader />
-          <main className="flex-1 p-4 md:p-6 overflow-auto"> 
+          <main className="flex-1 p-4 md:p-6 overflow-auto">
             {children}
           </main>
           <footer className="py-4 text-center text-sm text-muted-foreground border-t">

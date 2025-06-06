@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Globe, LogOut, Settings as SettingsIcon, TextIcon, PanelLeft } from 'lucide-react'; 
+import { Globe, LogOut, Settings as SettingsIcon, TextIcon, PanelLeft } from 'lucide-react';
 import { useTextSize } from '@/contexts/TextSizeContext';
 import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
 
@@ -20,18 +20,27 @@ export default function AppHeader() {
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b bg-card shadow-sm"> {/* z-index adjusted for sidebar */}
+    <header className="sticky top-0 z-40 w-full border-b bg-card shadow-sm">
       <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
         <div className="flex items-center gap-2">
-           {/* Show SidebarTrigger only on desktop if sidebar is not offcanvas, or always on mobile */}
-           {/* Logic moved to AppLayout for primary mobile trigger */}
-           <div className="hidden md:block"> {/* Desktop trigger */}
-             <SidebarTrigger asChild> 
-                <Button variant="ghost" size="icon" aria-label="Toggle sidebar">
-                    <PanelLeft className="h-5 w-5" />
-                </Button>
-             </SidebarTrigger>
-           </div>
+          {/* Mobile Sidebar Trigger - visible only on md:hidden */}
+          <div className="md:hidden">
+            <SidebarTrigger asChild>
+              <Button variant="ghost" size="icon" aria-label="Toggle sidebar">
+                <PanelLeft className="h-5 w-5" />
+              </Button>
+            </SidebarTrigger>
+          </div>
+
+          {/* Desktop Sidebar Trigger - visible only on md:block */}
+          <div className="hidden md:block">
+            <SidebarTrigger asChild>
+              <Button variant="ghost" size="icon" aria-label="Toggle sidebar">
+                <PanelLeft className="h-5 w-5" />
+              </Button>
+            </SidebarTrigger>
+          </div>
+
           <Link href="/translate" className="flex items-center gap-2">
             <Globe className="h-7 w-7 text-primary" />
             <span className="font-headline text-xl font-semibold hidden sm:inline">LinguaGhana</span>
