@@ -52,13 +52,13 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="container mx-auto p-4 md:p-8 flex flex-col gap-8">
+    <div className="container mx-auto p-4 md:p-8 flex flex-col gap-6 md:gap-8">
       <div className="text-center md:text-left">
         <h1 className="font-headline text-3xl md:text-4xl font-bold">Settings</h1>
         <p className="text-muted-foreground mt-1 md:mt-2">Manage your account and application preferences.</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 items-start">
         {/* Navigation Card - hidden on mobile, part of stacked layout */}
         <div className="md:col-span-1 md:sticky md:top-20 hidden md:block">
           <Card>
@@ -72,13 +72,13 @@ export default function SettingsPage() {
         </div>
 
         {/* Settings Content Cards - stack on mobile */}
-        <div className="md:col-span-2 space-y-8">
+        <div className="md:col-span-2 space-y-6 md:space-y-8">
           <Card id="profile">
-            <CardHeader>
+            <CardHeader className="px-4 sm:px-6 pt-4 pb-2">
               <CardTitle>Profile</CardTitle>
               <CardDescription>Manage your personal information.</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-4 sm:px-6 pb-4">
               <form onSubmit={handleProfileUpdate} className="space-y-6">
                 <div className="space-y-2">
                   <Label htmlFor="displayName">Display Name</Label>
@@ -103,11 +103,11 @@ export default function SettingsPage() {
           <Separator className="md:hidden" /> {/* Show separator on mobile between cards */}
 
           <Card id="appearance">
-            <CardHeader>
+            <CardHeader className="px-4 sm:px-6 pt-4 pb-2">
               <CardTitle>Appearance</CardTitle>
               <CardDescription>Customize the look and feel.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 px-4 sm:px-6 pb-4">
               <div className="space-y-2">
                 <Label htmlFor="theme-settings">Theme</Label>
                 <Select value={theme} onValueChange={handleThemeChange}>
@@ -126,11 +126,11 @@ export default function SettingsPage() {
           <Separator className="md:hidden" />
 
           <Card id="accessibility">
-            <CardHeader>
+            <CardHeader className="px-4 sm:px-6 pt-4 pb-2">
               <CardTitle>Accessibility</CardTitle>
               <CardDescription>Adjust for better accessibility.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 px-4 sm:px-6 pb-4">
                <div className="space-y-2">
                 <Label htmlFor="text-size-settings">Text Size</Label>
                  <Select value={textSize} onValueChange={(value) => setTextSize(value as 'text-size-sm' | 'text-size-md' | 'text-size-lg')}>

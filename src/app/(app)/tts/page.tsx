@@ -161,13 +161,13 @@ export default function TextToSpeechPage() {
         <h1 className="font-headline text-3xl md:text-4xl font-bold">Text-to-Speech</h1>
         <p className="text-muted-foreground mt-1 md:mt-2">Convert text into Twi or Ewe speech.</p>
       </div>
-      {error && (<Alert variant="destructive"><AlertTriangle className="h-4 w-4" /><AlertTitle>Error</AlertTitle><AlertDescription>{error}</AlertDescription></Alert>)}
+      {error && (<Alert variant="destructive" className="px-4 sm:px-6 py-3"><AlertTriangle className="h-4 w-4" /><AlertTitle>Error</AlertTitle><AlertDescription>{error}</AlertDescription></Alert>)}
       <Card className="card-animated w-full max-w-2xl mx-auto">
-        <CardHeader>
+        <CardHeader className="px-4 sm:px-6 pt-4 pb-2">
           <CardTitle>Synthesize Speech</CardTitle>
           <CardDescription>Enter text, select language & speaker, then synthesize.</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 px-4 sm:px-6 pb-4">
           <Textarea placeholder="Enter text to speak..." value={textToSpeak} onChange={(e) => setTextToSpeak(e.target.value)} className="min-h-[100px] sm:min-h-[150px] text-base" aria-label="Text to speak" />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>

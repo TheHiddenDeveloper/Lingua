@@ -127,13 +127,13 @@ export default function VoiceToTextGhanaNLPPage() {
         <h1 className="font-headline text-3xl md:text-4xl font-bold">Voice-to-Text</h1>
         <p className="text-muted-foreground mt-1 md:mt-2">Record and transcribe Twi audio.</p>
       </div>
-      {pageError && (<Alert variant="destructive" className="my-4"><AlertTriangle className="h-4 w-4" /><AlertTitle>Error</AlertTitle><AlertDescription>{pageError}</AlertDescription></Alert>)}
+      {pageError && (<Alert variant="destructive" className="my-4 px-4 sm:px-6 py-3"><AlertTriangle className="h-4 w-4" /><AlertTitle>Error</AlertTitle><AlertDescription>{pageError}</AlertDescription></Alert>)}
       <Card className="card-animated w-full max-w-2xl mx-auto">
-        <CardHeader>
+        <CardHeader className="px-4 sm:px-6 pt-4 pb-2">
           <CardTitle>Transcribe Audio</CardTitle>
           <CardDescription>Select language, then {isRecording ? "Stop" : "Start"} Recording.</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 px-4 sm:px-6 pb-4">
           <div className="flex flex-col sm:flex-row gap-4 items-center">
             <div className="w-full sm:w-auto">
                 <Label htmlFor="language-select-vot" className="sr-only">Language</Label>

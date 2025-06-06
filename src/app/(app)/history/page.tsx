@@ -132,14 +132,14 @@ export default function HistoryPage() {
           <TabsTrigger value="vot">Voice-to-Text</TabsTrigger>
           <TabsTrigger value="tts">Text-to-Speech</TabsTrigger>
         </TabsList>
-        {error && (<Alert variant="destructive" className="mb-4"><AlertTitle>Error</AlertTitle><AlertDescription>{error}</AlertDescription></Alert>)}
+        {error && (<Alert variant="destructive" className="mb-4 px-4 sm:px-6 py-3"><AlertTitle>Error</AlertTitle><AlertDescription>{error}</AlertDescription></Alert>)}
         {['translations', 'summaries', 'vot', 'tts'].map(tabValue => (
           <TabsContent key={tabValue} value={tabValue}>
             {isLoadingHistory && historyItems.length === 0 && <div className="text-center py-8"><LoadingSpinner /></div>}
             {!isLoadingHistory && historyItems.length === 0 && (
               <p className="text-center text-muted-foreground py-8">No {tabValue === 'vot' ? 'voice-to-text' : tabValue === 'tts' ? 'text-to-speech' : tabValue} history found.</p>
             )}
-            {historyItems.length > 0 && (<ScrollArea className="h-[calc(100vh-24rem)] sm:h-[calc(100vh-22rem)] pr-2 sm:pr-4">{historyItems.map(item => renderHistoryItem(item))}</ScrollArea>)}
+            {historyItems.length > 0 && (<ScrollArea className="h-[calc(100vh-26rem)] sm:h-[calc(100vh-24rem)] pr-2 sm:pr-4">{historyItems.map(item => renderHistoryItem(item))}</ScrollArea>)}
             {hasMore && !isLoadingHistory && historyItems.length > 0 && (
               <div className="text-center mt-4 md:mt-6"><Button onClick={handleLoadMore} variant="outline">Load More</Button></div>
             )}

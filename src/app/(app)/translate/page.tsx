@@ -164,9 +164,8 @@ export default function TranslatePage() {
   const handleCopyInput = () => { if (!inputText) return; navigator.clipboard.writeText(inputText).then(() => toast({ title: 'Copied!', description: 'Input text copied.'})).catch(err => toast({ title: 'Copy Failed', variant: 'destructive' })); };
   const handleCopyOutput = () => { if (!outputText) return; navigator.clipboard.writeText(outputText).then(() => toast({ title: 'Copied!', description: 'Translated text copied.'})).catch(err => toast({ title: 'Copy Failed', variant: 'destructive' })); };
 
-
   return (
-    <div className="container mx-auto p-4 md:p-6 flex flex-col gap-4">
+    <div className="container mx-auto p-4 md:p-6 flex flex-col gap-4 md:gap-6">
       <div className="text-center mb-4 md:mb-6">
         <h1 className="font-headline text-3xl md:text-4xl font-bold">LinguaGhana Translator</h1>
         <p className="text-muted-foreground mt-1 md:mt-2">Translate between English and Ghanaian languages.</p>
@@ -182,7 +181,7 @@ export default function TranslatePage() {
             {supportedLanguages.map(lang => (<SelectItem key={`src-${lang.code}`} value={lang.code}>{lang.name}</SelectItem>))}
           </SelectContent>
         </Select>
-        <Button onClick={handleSwapLanguages} variant="ghost" size="icon" className="btn-animated" aria-label="Swap languages">
+        <Button onClick={handleSwapLanguages} variant="ghost" size="icon" className="btn-animated my-1 sm:my-0" aria-label="Swap languages">
           <ArrowRightLeft className="h-5 w-5 text-primary" />
         </Button>
         <Select value={targetLang} onValueChange={setTargetLang}>
@@ -198,12 +197,12 @@ export default function TranslatePage() {
       {/* Input and Output Text Areas */}
       <div className="flex flex-col md:flex-row gap-4 md:gap-6 items-start">
         <Card className="w-full card-animated flex-1">
-          <CardHeader className="pb-2">
+          <CardHeader className="pb-2 pt-4 px-4 sm:px-6">
             <CardTitle className="text-base sm:text-lg font-medium">
               {supportedLanguages.find(l => l.code === sourceLang)?.name || 'Source'}
             </CardTitle>
           </CardHeader>
-          <CardContent className="flex flex-col gap-2">
+          <CardContent className="flex flex-col gap-2 px-4 sm:px-6 pb-4">
             <Textarea
               placeholder="Enter text to translate (max 1000 chars)..."
               value={inputText}
@@ -212,7 +211,7 @@ export default function TranslatePage() {
               aria-label="Input text for translation"
               maxLength={1000}
             />
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center mt-1">
               <Button variant="ghost" size="icon" onClick={toggleVoiceInput} disabled={!browserSupportsSpeechRecognition} aria-label={isListening ? "Stop voice input" : "Start voice input"}>
                 <Mic className={`h-5 w-5 ${isListening ? 'text-destructive animate-pulse' : ''}`} />
               </Button>
@@ -225,12 +224,12 @@ export default function TranslatePage() {
         </Card>
 
         <Card className="w-full card-animated flex-1 mt-4 md:mt-0">
-          <CardHeader className="pb-2">
+          <CardHeader className="pb-2 pt-4 px-4 sm:px-6">
             <CardTitle className="text-base sm:text-lg font-medium">
               {supportedLanguages.find(l => l.code === targetLang)?.name || 'Translation'}
             </CardTitle>
           </CardHeader>
-          <CardContent className="flex flex-col gap-2">
+          <CardContent className="flex flex-col gap-2 px-4 sm:px-6 pb-4">
             <Textarea
               placeholder="Translation will appear here..."
               value={outputText}
@@ -238,7 +237,7 @@ export default function TranslatePage() {
               className="min-h-[150px] sm:min-h-[200px] bg-muted/30 text-base"
               aria-label="Translated text output"
             />
-             <div className="flex justify-between items-center">
+             <div className="flex justify-between items-center mt-1">
                 <Button variant="ghost" size="icon" onClick={handleSpeakOutput} disabled={!browserSupportsTextToSpeech || !outputText.trim()} aria-label={isSpeaking ? "Stop speaking" : "Speak translated text"}>
                   <Volume2 className={`h-5 w-5 ${isSpeaking ? 'text-destructive animate-pulse' : ''}`} />
                 </Button>
@@ -268,10 +267,10 @@ export default function TranslatePage() {
       {/* Summary Section */}
       {summary && (
         <Card className="mt-4 md:mt-6 card-animated">
-          <CardHeader>
+          <CardHeader className="pb-2 pt-4 px-4 sm:px-6">
             <CardTitle className="font-headline text-lg sm:text-xl">Translation Summary</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-4 sm:px-6 pb-4">
             <ScrollArea className="h-[100px] sm:h-[150px] w-full rounded-md border p-3 sm:p-4 bg-muted/20">
               <p className="text-sm whitespace-pre-wrap">{summary}</p>
             </ScrollArea>

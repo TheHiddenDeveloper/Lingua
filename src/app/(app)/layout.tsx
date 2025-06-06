@@ -16,9 +16,8 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarInset,
-  // SidebarTrigger // No longer need explicit trigger here for mobile, AppHeader handles it
 } from '@/components/ui/sidebar';
-import { Languages, Volume2, Mic, Settings, History, PanelLeft, FileText, Globe } from 'lucide-react';
+import { Languages, Volume2, Mic, Settings, History, FileText, Globe } from 'lucide-react';
 
 export default function AppLayout({ children }: { children: ReactNode }) {
   const { user, loading, logout } = useAuth();
@@ -49,8 +48,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         <Sidebar collapsible="icon" className="border-r">
           <SidebarHeader className="p-4">
             <Link href="/translate" className="flex items-center gap-2">
-              {/* LinguaGhana title/logo area in sidebar - mobile trigger is now in AppHeader */}
-              <Globe className="h-7 w-7 text-primary md:h-6 md:w-6" /> {/* Icon for sidebar header */}
+              <Globe className="h-7 w-7 text-primary md:h-6 md:w-6" />
               <h2 className="font-headline text-lg font-semibold text-primary group-data-[collapsible=icon]:hidden">LinguaGhana</h2>
             </Link>
           </SidebarHeader>

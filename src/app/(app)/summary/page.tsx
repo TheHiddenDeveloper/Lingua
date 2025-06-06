@@ -119,13 +119,13 @@ export default function SummaryPage() {
       )}
 
       <Card className="card-animated w-full">
-        <CardHeader>
+        <CardHeader className="px-4 sm:px-6 pt-4 pb-2">
           <CardTitle>Summarize Your Text</CardTitle>
           <CardDescription>
             Enter your text, select its language, and click &quot;Summarize&quot;. Max {MAX_INPUT_LENGTH} characters.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 px-4 sm:px-6 pb-4">
           <div>
             <Label htmlFor="input-text-area" className="sr-only">Your Text:</Label>
             <Textarea
@@ -142,8 +142,8 @@ export default function SummaryPage() {
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4 items-center">
-            <div className="w-full sm:w-auto">
+          <div className="flex flex-col sm:flex-row gap-4 items-center sm:items-end">
+            <div className="w-full sm:w-auto flex-grow sm:flex-grow-0">
                 <Label htmlFor="language-select">Language of Input Text:</Label>
                 <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
                 <SelectTrigger id="language-select" className="w-full sm:w-[200px] mt-1">
@@ -156,7 +156,7 @@ export default function SummaryPage() {
                 </SelectContent>
                 </Select>
             </div>
-            <Button onClick={handleSummarize} disabled={isLoading || !inputText.trim()} size="lg" className="w-full sm:w-auto btn-animated mt-2 sm:mt-0 self-end sm:self-auto">
+            <Button onClick={handleSummarize} disabled={isLoading || !inputText.trim()} size="lg" className="w-full sm:w-auto btn-animated mt-2 sm:mt-0">
                 {isLoading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <FileText className="mr-2 h-5 w-5" />}
                 Summarize Text
             </Button>
@@ -166,7 +166,7 @@ export default function SummaryPage() {
 
       {summary && (
         <Card className="mt-6 card-animated">
-          <CardHeader>
+          <CardHeader className="px-4 sm:px-6 pt-4 pb-2">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
               <CardTitle className="font-headline text-xl">Generated Summary</CardTitle>
               <div className="flex gap-2 self-end sm:self-auto">
@@ -181,7 +181,7 @@ export default function SummaryPage() {
               </div>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-4 sm:px-6 pb-4">
             <ScrollArea className="h-[150px] sm:h-[200px] w-full rounded-md border p-4 bg-muted/20">
               <p className="text-sm whitespace-pre-wrap">{summary}</p>
             </ScrollArea>
@@ -190,10 +190,10 @@ export default function SummaryPage() {
       )}
        {!isLoading && !summary && !error && inputText.length > 0 && (
          <Card className="mt-6 card-animated">
-          <CardHeader>
+          <CardHeader className="px-4 sm:px-6 pt-4 pb-2">
              <CardTitle className="font-headline text-xl">Generated Summary</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-4 sm:px-6 pb-4">
             <p className="text-muted-foreground">Click &quot;Summarize Text&quot; to generate a summary.</p>
           </CardContent>
         </Card>

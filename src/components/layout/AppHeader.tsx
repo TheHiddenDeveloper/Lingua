@@ -13,7 +13,7 @@ import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
 export default function AppHeader() {
   const { user, logout } = useAuth();
   const { textSize, setTextSize } = useTextSize();
-  const { isMobile } = useSidebar(); // Get sidebar context
+  const { isMobile, setOpenMobile } = useSidebar(); // Get sidebar context
 
   const handleTextSizeChange = (newSize: 'text-size-sm' | 'text-size-md' | 'text-size-lg') => {
     setTextSize(newSize);
@@ -23,16 +23,14 @@ export default function AppHeader() {
     <header className="sticky top-0 z-40 w-full border-b bg-card shadow-sm">
       <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
         <div className="flex items-center gap-2">
-          {/* Mobile Sidebar Trigger - visible only on md:hidden */}
+          {/* Mobile Sidebar Trigger - visible only on md:hidden. Opens the sheet. */}
           <div className="md:hidden">
-            <SidebarTrigger asChild>
-              <Button variant="ghost" size="icon" aria-label="Toggle sidebar">
-                <PanelLeft className="h-5 w-5" />
-              </Button>
-            </SidebarTrigger>
+            <Button variant="ghost" size="icon" aria-label="Open sidebar menu" onClick={() => setOpenMobile(true)}>
+              <PanelLeft className="h-5 w-5" />
+            </Button>
           </div>
 
-          {/* Desktop Sidebar Trigger - visible only on md:block */}
+          {/* Desktop Sidebar Trigger - visible only on md:block. Collapses/expands the sidebar. */}
           <div className="hidden md:block">
             <SidebarTrigger asChild>
               <Button variant="ghost" size="icon" aria-label="Toggle sidebar">
