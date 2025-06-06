@@ -6,6 +6,7 @@
  * - logTextTranslation: Logs a text translation event.
  * - logVoiceToText: Logs a voice-to-text transcription event.
  * - logTextToSpeech: Logs a text-to-speech synthesis event.
+ * - logTextSummary: Logs a text summarization event.
  */
 
 import { ai } from '@/ai/genkit';
@@ -40,6 +41,15 @@ export const TextToSpeechHistoryInputSchema = BaseHistoryInputSchema.extend({
   speakerId: z.string().optional().describe('The speaker ID used for synthesis, if applicable.'),
 });
 export type TextToSpeechHistoryInput = z.infer<typeof TextToSpeechHistoryInputSchema>;
+
+// Schema for Text Summarization logging
+export const TextSummaryHistoryInputSchema = BaseHistoryInputSchema.extend({
+  originalText: z.string().describe('The original long-form text.'),
+  summarizedText: z.string().describe('The AI-generated summary.'),
+  language: z.string().describe('The language of the original text.'),
+});
+export type TextSummaryHistoryInput = z.infer<typeof TextSummaryHistoryInputSchema>;
+
 
 const LogHistoryOutputSchema = z.object({
   success: z.boolean().describe('Whether the logging was successful.'),
@@ -135,4 +145,33 @@ export const logTextToSpeechFlow = ai.defineFlow(
 );
 export async function logTextToSpeech(input: TextToSpeechHistoryInput): Promise<LogHistoryOutput> {
   return logTextToSpeechFlow(input);
+}
+
+// Flow to log text summary
+export const logTextSummaryFlow = ai.defineFlow(
+  {
+    name: 'logTextSummaryFlow',
+    inputSchema: TextSummaryHistoryInputSchema,
+    outputSchema: LogHistoryOutputSchema,
+  },
+  async (input) => {
+    try {
+      const { userId, ...data } = input;
+      const docRef = await adminDb
+        .collection('userHistories')
+        .doc(userId)
+        .collection('textSummaries')
+        .add({
+          ...data,
+          timestamp: adminTimestamp(),
+        });
+      return { success: true, id: docRef.id };
+    } catch (error: any) {
+      console.error('Error logging text summary:', error);
+      return { success: false, error: error.message || 'Failed to log text summary.' };
+    }
+  }
+);
+export async function logTextSummary(input: TextSummaryHistoryInput): Promise<LogHistoryOutput> {
+  return logTextSummaryFlow(input);
 }

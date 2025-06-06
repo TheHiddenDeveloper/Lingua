@@ -3,19 +3,18 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { db, appTimestamp } from '@/lib/firebase'; // Assuming appTimestamp is serverTimestamp or similar
-import { collection, query, where, orderBy, limit, getDocs, startAfter, type DocumentData, type QueryDocumentSnapshot, Timestamp as FirestoreTimestamp } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { collection, query, orderBy, limit, getDocs, startAfter, type DocumentData, type QueryDocumentSnapshot, Timestamp as FirestoreTimestamp } from 'firebase/firestore';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { TextTranslationHistoryEntry, VoiceToTextHistoryEntry, TextToSpeechHistoryEntry, type AnyHistoryEntry } from '@/types/history';
+import { TextTranslationHistoryEntry, VoiceToTextHistoryEntry, TextToSpeechHistoryEntry, TextSummaryHistoryEntry, type AnyHistoryEntry } from '@/types/history';
 import { formatDistanceToNow } from 'date-fns';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
-
-type HistoryTab = 'translations' | 'vot' | 'tts';
+type HistoryTab = 'translations' | 'summaries' | 'vot' | 'tts';
 
 const PAGE_SIZE = 10;
 
@@ -32,6 +31,7 @@ export default function HistoryPage() {
   const getCollectionName = (tab: HistoryTab): string => {
     switch (tab) {
       case 'translations': return 'textTranslations';
+      case 'summaries': return 'textSummaries';
       case 'vot': return 'voiceToText';
       case 'tts': return 'textToSpeech';
       default: throw new Error('Invalid history tab');
@@ -53,16 +53,14 @@ export default function HistoryPage() {
         q = query(historyCollectionRef, orderBy('timestamp', 'desc'), startAfter(lastVisibleDoc), limit(PAGE_SIZE));
       } else {
         q = query(historyCollectionRef, orderBy('timestamp', 'desc'), limit(PAGE_SIZE));
-        setHistoryItems([]); // Reset for new tab or initial load
+        setHistoryItems([]); 
       }
 
       const querySnapshot = await getDocs(q);
       const newItems = querySnapshot.docs.map(doc => ({
         id: doc.id,
-        userId: user.uid, // Already known, but good for type consistency
+        userId: user.uid, 
         ...doc.data(),
-        // Ensure timestamp is a FirestoreTimestamp for date-fns compatibility if needed client-side
-        // Usually, Firestore SDK handles this, but an explicit cast or check might be good
         timestamp: doc.data().timestamp as FirestoreTimestamp 
       } as AnyHistoryEntry));
       
@@ -80,11 +78,11 @@ export default function HistoryPage() {
 
   useEffect(() => {
     if (user && !authLoading) {
-      setLastVisibleDoc(null); // Reset pagination when tab changes or user loads
+      setLastVisibleDoc(null); 
       setHasMore(true);
       fetchHistory(activeTab);
     }
-  }, [user, authLoading, activeTab, fetchHistory]); // fetchHistory is memoized
+  }, [user, authLoading, activeTab, fetchHistory]); 
 
   const handleTabChange = (value: string) => {
     setActiveTab(value as HistoryTab);
@@ -111,6 +109,26 @@ export default function HistoryPage() {
             <CardContent className="text-sm space-y-1">
               <p><strong>From ({transItem.sourceLanguage}):</strong> {transItem.originalText}</p>
               <p><strong>To ({transItem.targetLanguage}):</strong> {transItem.translatedText}</p>
+            </CardContent>
+          </Card>
+        );
+      case 'summaries':
+        const summaryItem = item as TextSummaryHistoryEntry;
+        return (
+          <Card key={item.id} className="mb-4">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">Text Summary ({summaryItem.language})</CardTitle>
+              <CardDescription className="text-xs">{timeAgo}</CardDescription>
+            </CardHeader>
+            <CardContent className="text-sm space-y-1">
+              <p className="font-semibold">Original:</p>
+              <ScrollArea className="h-20 rounded-md border p-2 bg-muted/20">
+                <p className="whitespace-pre-wrap text-xs">{summaryItem.originalText}</p>
+              </ScrollArea>
+              <p className="font-semibold mt-2">Summary:</p>
+              <ScrollArea className="h-20 rounded-md border p-2 bg-muted/20">
+                 <p className="whitespace-pre-wrap text-xs">{summaryItem.summarizedText}</p>
+              </ScrollArea>
             </CardContent>
           </Card>
         );
@@ -150,7 +168,6 @@ export default function HistoryPage() {
     return <div className="flex justify-center items-center h-screen"><LoadingSpinner size="lg" /></div>;
   }
   if (!user) {
-    // This should ideally be handled by AppLayout, but as a fallback:
     return <div className="text-center p-8">Please log in to view your history.</div>;
   }
 
@@ -159,8 +176,9 @@ export default function HistoryPage() {
       <h1 className="font-headline text-3xl md:text-4xl font-bold mb-6 text-center md:text-left">Activity History</h1>
       
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 mb-6">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 mb-6">
           <TabsTrigger value="translations">Translations</TabsTrigger>
+          <TabsTrigger value="summaries">Summaries</TabsTrigger>
           <TabsTrigger value="vot">Voice-to-Text</TabsTrigger>
           <TabsTrigger value="tts">Text-to-Speech</TabsTrigger>
         </TabsList>
@@ -172,16 +190,16 @@ export default function HistoryPage() {
           </Alert>
         )}
 
-        {['translations', 'vot', 'tts'].map(tabValue => (
+        {['translations', 'summaries', 'vot', 'tts'].map(tabValue => (
           <TabsContent key={tabValue} value={tabValue}>
             {isLoadingHistory && historyItems.length === 0 && <div className="text-center py-8"><LoadingSpinner /></div>}
             
             {!isLoadingHistory && historyItems.length === 0 && (
-              <p className="text-center text-muted-foreground py-8">No {tabValue} history found.</p>
+              <p className="text-center text-muted-foreground py-8">No {tabValue === 'vot' ? 'voice-to-text' : tabValue === 'tts' ? 'text-to-speech' : tabValue} history found.</p>
             )}
 
             {historyItems.length > 0 && (
-                 <ScrollArea className="h-[calc(100vh-20rem)] pr-4"> {/* Adjust height as needed */}
+                 <ScrollArea className="h-[calc(100vh-22rem)] pr-4"> 
                     {historyItems.map(item => renderHistoryItem(item))}
                 </ScrollArea>
             )}

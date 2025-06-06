@@ -25,5 +25,15 @@ export interface TextToSpeechHistoryEntry extends BaseHistoryEntry {
   speakerId?: string;
 }
 
+export interface TextSummaryHistoryEntry extends BaseHistoryEntry {
+  originalText: string;
+  summarizedText: string;
+  language: string; // Language of the original text
+}
+
 // Union type for convenience if needed, though typically handled per tab
-export type AnyHistoryEntry = TextTranslationHistoryEntry | VoiceToTextHistoryEntry | TextToSpeechHistoryEntry;
+export type AnyHistoryEntry = 
+  | TextTranslationHistoryEntry 
+  | VoiceToTextHistoryEntry 
+  | TextToSpeechHistoryEntry
+  | TextSummaryHistoryEntry;

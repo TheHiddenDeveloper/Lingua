@@ -1,48 +1,41 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // User Histories. Match the top-level document for a user.
+    // User-specific history data
     match /userHistories/{userId} {
-      // IMPORTANT: We don't want clients to list all history types or get this parent doc.
-      // So, no general allow read/write here for the /userHistories/{userId} document itself.
-      // Access is granted to subcollections below.
+      // Allow user to read/write their own top-level document if needed for future profile info
+      // allow read, write: if request.auth != null && request.auth.uid == userId;
 
-      // Text Translations subcollection
-      match /textTranslations/{translationDocId} {
-        // Allow a user to get individual documents and list documents in their own textTranslations
+      // Text Translations History
+      match /textTranslations/{docId} {
         allow get, list: if request.auth != null && request.auth.uid == userId;
-        // Deny client-side writes; Genkit (Admin SDK) handles these
-        allow create, update, delete: if false;
+        allow create, update, delete: if false; // Client cannot write, only Admin SDK (Genkit)
       }
 
-      // Voice-to-Text subcollection
-      match /voiceToText/{votDocId} {
-        // Allow a user to get individual documents and list documents in their own voiceToText
+      // Voice-to-Text History
+      match /voiceToText/{docId} {
         allow get, list: if request.auth != null && request.auth.uid == userId;
-        // Deny client-side writes
-        allow create, update, delete: if false;
+        allow create, update, delete: if false; // Client cannot write
       }
 
-      // Text-to-Speech subcollection
-      match /textToSpeech/{ttsDocId} {
-        // Allow a user to get individual documents and list documents in their own textToSpeech
+      // Text-to-Speech History
+      match /textToSpeech/{docId} {
         allow get, list: if request.auth != null && request.auth.uid == userId;
-        // Deny client-side writes
-        allow create, update, delete: if false;
+        allow create, update, delete: if false; // Client cannot write
       }
 
-      // Fallback: Deny any other operations on other subcollections under userHistories/{userId}
-      // This prevents accidental access to future or mistyped subcollection names.
-      match /{otherCollection}/{otherDocId} {
-        allow read, write: if false;
+      // Text Summaries History
+      match /textSummaries/{docId} {
+        allow get, list: if request.auth != null && request.auth.uid == userId;
+        allow create, update, delete: if false; // Client cannot write
       }
     }
 
-    // Global fallback: Deny all other access to any other path by default.
-    // This should be the last rule in the "documents" block.
-    match /{path=**} {
+    // Deny all other access by default to any other path
+    match /{document=**} {
       allow read, write: if false;
     }
   }

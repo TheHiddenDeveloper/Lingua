@@ -18,7 +18,7 @@ import {
   SidebarInset,
   SidebarTrigger
 } from '@/components/ui/sidebar';
-import { Languages, Volume2, Mic, Settings, LogOut, PanelLeft, History } from 'lucide-react'; // Added History
+import { Languages, Volume2, Mic, Settings, History, PanelLeft, FileText } from 'lucide-react'; // Added History, FileText
 
 export default function AppLayout({ children }: { children: ReactNode }) {
   const { user, loading, logout } = useAuth();
@@ -68,6 +68,18 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                   <Link href="/translate">
                     <Languages className="h-5 w-5" />
                     <span className="group-data-[collapsible=icon]:hidden">Translator</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+               <SidebarMenuItem>
+                <SidebarMenuButton 
+                  asChild 
+                  isActive={pathname === '/summary'}
+                  tooltip={{content: "AI Summarizer", side: "right", align: "center"}}
+                >
+                  <Link href="/summary">
+                    <FileText className="h-5 w-5" />
+                    <span className="group-data-[collapsible=icon]:hidden">Summarizer</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
