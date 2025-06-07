@@ -32,7 +32,7 @@ export default function HelpPage() {
           {
             q: 'How do I translate text?',
             // q_tw: 'Mɛyɛ dɛn na makyerɛ kasa ase?',
-            a: '1. Go to the "Translator" page. 2. Select your source and target languages. 3. Type or paste your text into the input box. 4. Click the "Translate" button. Your translation will appear in the output box.',
+            a: '1. Go to the "Translator" page.\n2. Select your source and target languages.\n3. Type or paste your text into the input box.\n4. Click the "Translate" button. Your translation will appear in the output box.',
           },
           {
             q: 'Which languages are supported for translation?',
@@ -52,7 +52,7 @@ export default function HelpPage() {
         faqs: [
           {
             q: 'How do I summarize text?',
-            a: '1. Navigate to the "Summarizer" page. 2. Paste your long text into the input area. 3. Select the language of the input text. 4. Click "Summarize Text". The AI-generated summary will appear below.',
+            a: '1. Navigate to the "Summarizer" page.\n2. Paste your long text into the input area.\n3. Select the language of the input text.\n4. Click "Summarize Text". The AI-generated summary will appear below.',
           },
           {
             q: 'What kind of text can I summarize?',
@@ -72,7 +72,7 @@ export default function HelpPage() {
         faqs: [
           {
             q: 'How do I use Voice-to-Text?',
-            a: '1. Go to the "Voice-to-Text" page. 2. Select the language you will be speaking (currently Twi is supported). 3. Click the "Start Recording" button (you may need to grant microphone permission). 4. Speak clearly. 5. Click "Stop Recording". Your transcribed text will appear.',
+            a: '1. Go to the "Voice-to-Text" page.\n2. Select the language you will be speaking (currently Twi is supported).\n3. Click the "Start Recording" button (you may need to grant microphone permission).\n4. Speak clearly.\n5. Click "Stop Recording". Your transcribed text will appear.',
           },
           {
             q: 'Which languages are supported for Voice-to-Text?',
@@ -92,7 +92,7 @@ export default function HelpPage() {
         faqs: [
           {
             q: 'How do I use Text-to-Speech?',
-            a: '1. Visit the "Text-to-Speech" page. 2. Enter the text you want to hear into the text area. 3. Select the desired language (Twi or Ewe) and a speaker voice. 4. Click the "Synthesize" button. An audio player will appear to play the speech.',
+            a: '1. Visit the "Text-to-Speech" page.\n2. Enter the text you want to hear into the text area.\n3. Select the desired language (Twi or Ewe) and a speaker voice.\n4. Click the "Synthesize" button. An audio player will appear to play the speech.',
           },
           {
             q: 'Which languages and voices are available?',
