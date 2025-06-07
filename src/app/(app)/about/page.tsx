@@ -61,12 +61,12 @@ export default function AboutPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="px-4 sm:px-6 pb-4 text-sm md:text-base text-muted-foreground space-y-2">
-          <p>
+          <p className="text-justify">
             LinguaGhana is dedicated to bridging communication gaps within Ghana by providing accessible and reliable translation tools. 
             We aim to support seamless translation between English and key Ghanaian languages including Twi, Ga, Dagbani, and Ewe.
             {/* Example: {t('mission.paragraph1')} */}
           </p>
-          <p>
+          <p className="text-justify">
             Our goal is to empower individuals, promote cultural exchange, and make information more accessible to all, regardless of linguistic background.
             {/* Example: {t('mission.paragraph2')} */}
           </p>
@@ -82,12 +82,12 @@ export default function AboutPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="px-4 sm:px-6 pb-4 text-sm md:text-base text-muted-foreground space-y-2">
-          <p>
+          <p className="text-justify">
             LinguaGhana was born as a final year undergraduate project at the prestigious University of Mines and Technology (UMaT), Tarkwa. 
             The project was driven by a passion for technology and a deep appreciation for Ghana&apos;s rich linguistic diversity.
             {/* Example: {t('story.paragraph1')} */}
           </p>
-          <p>
+          <p className="text-justify">
             We recognized the cultural significance of local languages and the need for tools that make inter-language communication easier. 
             This app represents our commitment to leveraging technology for positive social impact and celebrating Ghanaian heritage.
             {/* Example: {t('story.paragraph2')} */}
@@ -147,7 +147,7 @@ export default function AboutPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="px-4 sm:px-6 pb-4 text-sm text-muted-foreground">
-          <p className="mb-3">LinguaGhana is built with modern technologies and relies on several fantastic tools and services:</p>
+          <p className="mb-3 text-justify">LinguaGhana is built with modern technologies and relies on several fantastic tools and services:</p>
           {/* Example: {t('tech.intro')} */}
           <ul className="list-disc list-inside space-y-1.5">
             {techCredits.map((tech) => (
@@ -171,7 +171,7 @@ export default function AboutPage() {
         <CardContent className="px-4 sm:px-6 pb-4 text-sm md:text-base text-muted-foreground">
           <p>LinguaGhana Version: {APP_VERSION}</p>
           {/* Example: <p>{t('version.currentVersion', { version: APP_VERSION })}</p> */}
-          <p className="mt-1">
+          <p className="mt-1 text-justify">
             We are continuously working to improve LinguaGhana. For the latest updates, please check our project repository or announcements.
             {/* Example: {t('version.updates')} */}
           </p>
@@ -186,7 +186,7 @@ export default function AboutPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="px-4 sm:px-6 pb-4">
-          <p className="text-sm text-muted-foreground mb-4">
+          <p className="text-sm text-muted-foreground mb-4 text-justify">
             Your feedback is invaluable to us! If you have questions, suggestions, or encounter issues, please reach out.
           </p>
           <Button asChild className="btn-animated w-full sm:w-auto">
@@ -206,5 +206,7 @@ export default function AboutPage() {
     </div>
   );
 }
+
+    
 
     
