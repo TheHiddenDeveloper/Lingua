@@ -16,6 +16,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Label } from '@/components/ui/label';
+import { useGhanaNLP } from '@/contexts/GhanaNLPContext'; // Import useGhanaNLP
 
 const supportedLanguages = [
   { code: 'en', name: 'English', localName: 'English' },
@@ -28,7 +29,7 @@ const supportedLanguages = [
 const langToBCP47 = (langCode: string): string => {
   switch (langCode) {
     case 'en': return 'en-US';
-    case 'tw': return 'ak-GH';
+    case 'tw': return 'ak-GH'; // Twi (Akan)
     case 'ga': return 'ga-GH';
     case 'dag': return 'dag-GH';
     case 'ee': return 'ee-GH';
@@ -45,11 +46,14 @@ export default function TranslatePage() {
   const [isLoadingSummary, setIsLoadingSummary] = useState(false);
   const [summary, setSummary] = useState<string | null>(null);
   const [aiError, setAiError] = useState<string | null>(null);
+  const [translationPageError, setTranslationPageError] = useState<string | null>(null);
+
 
   const { toast } = useToast();
   const { user } = useAuth();
   const { isListening, transcript, startListening, stopListening, error: sttError, browserSupportsSpeechRecognition } = useSpeechRecognition();
   const { isSpeaking, speak, cancel: cancelSpeech, error: ttsError, browserSupportsTextToSpeech } = useTextToSpeech();
+  const { fetchGhanaNLP, getApiKeyBasic, getApiKeyDev } = useGhanaNLP(); // Use context
 
   useEffect(() => {
     if (transcript) {
@@ -74,43 +78,43 @@ export default function TranslatePage() {
       toast({ title: 'Input Too Long', description: 'Input text must be 1000 characters or less.', variant: 'destructive' });
       return;
     }
-    const apiKey = process.env.NEXT_PUBLIC_GHANANLP_API_KEY;
-    if (!apiKey) {
-      toast({ title: 'API Key Missing', description: 'Translation API key is not configured.', variant: 'destructive' });
+
+    const apiKeyBasic = getApiKeyBasic();
+    const apiKeyDev = getApiKeyDev();
+    if (!apiKeyBasic && !apiKeyDev) {
+      const msg = 'Translation API key is not configured.';
+      toast({ title: 'API Key Missing', description: msg, variant: 'destructive' });
+      setTranslationPageError(msg);
       return;
     }
     setIsLoadingTranslation(true);
     setSummary(null);
     setAiError(null);
+    setTranslationPageError(null);
     setOutputText('');
-    const apiSourceLang = sourceLang === 'ga' ? 'gaa' : sourceLang;
+    const apiSourceLang = sourceLang === 'ga' ? 'gaa' : sourceLang; // GhanaNLP uses 'gaa' for Ga
     const apiTargetLang = targetLang === 'ga' ? 'gaa' : targetLang;
     const langPair = `${apiSourceLang}-${apiTargetLang}`;
     try {
-      const response = await fetch('https://translation-api.ghananlp.org/v1/translate', {
+      const response = await fetchGhanaNLP('https://translation-api.ghananlp.org/v1/translate', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Ocp-Apim-Subscription-Key': apiKey },
+        headers: { 'Content-Type': 'application/json' }, // Key handled by fetchGhanaNLP
         body: JSON.stringify({ in: inputText, lang: langPair }),
       });
-      if (response.ok) {
-        const translatedText = await response.text();
-        setOutputText(translatedText);
-        toast({ title: 'Translation Complete', description: 'Text translated successfully.' });
-        if (user && user.uid) {
-          try {
-            await logTextTranslation({ userId: user.uid, originalText: inputText, translatedText, sourceLanguage: sourceLang, targetLanguage: targetLang });
-          } catch (logError: any) { console.error("Failed to log translation history:", logError); }
-        }
-      } else {
-        let errorData;
-        try { errorData = await response.json(); } catch (e) { errorData = { message: response.statusText || `Translation failed with status: ${response.status}` }; }
-        const errorMessage = errorData?.message || 'Unknown translation error occurred.';
-        toast({ title: 'Translation Error', description: errorMessage, variant: 'destructive' });
-        setOutputText('');
+      // fetchGhanaNLP throws on non-ok or handles 403 for key swap retry
+      const translatedText = await response.text(); // Assuming text response for this endpoint
+      setOutputText(translatedText);
+      toast({ title: 'Translation Complete', description: 'Text translated successfully.' });
+      if (user && user.uid) {
+        try {
+          await logTextTranslation({ userId: user.uid, originalText: inputText, translatedText, sourceLanguage: sourceLang, targetLanguage: targetLang });
+        } catch (logError: any) { console.error("Failed to log translation history:", logError); }
       }
     } catch (error: any) {
       console.error("Translation API call error:", error);
-      toast({ title: 'Translation Failed', description: error.message || 'An unexpected error occurred.', variant: 'destructive' });
+      const errorMsg = error.message || 'An unexpected error occurred during translation.';
+      setTranslationPageError(errorMsg);
+      toast({ title: 'Translation Failed', description: errorMsg, variant: 'destructive' });
       setOutputText('');
     }
     setIsLoadingTranslation(false);
@@ -127,7 +131,7 @@ export default function TranslatePage() {
     try {
       const targetLanguageName = supportedLanguages.find(l => l.code === targetLang)?.name || targetLang;
       const input: SummarizeTranslationInput = { translation: outputText, language: targetLanguageName };
-      const result: SummarizeTranslationOutput = await summarizeTranslation(input);
+      const result: SummarizeTranslationOutput = await summarizeTranslation(input); // This uses Genkit, not GhanaNLP context
       setSummary(result.summary);
       toast({ title: 'Summary Generated', description: 'Translation summary created successfully.' });
     } catch (error: any) {
@@ -170,6 +174,13 @@ export default function TranslatePage() {
         <h1 className="font-headline text-3xl md:text-4xl font-bold">LinguaGhana Translator</h1>
         <p className="text-muted-foreground mt-1 md:mt-2">Translate between English and Ghanaian languages.</p>
       </div>
+      {translationPageError && (
+        <Alert variant="destructive" className="my-4">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Translation Error</AlertTitle>
+          <AlertDescription>{translationPageError}</AlertDescription>
+        </Alert>
+      )}
 
       {/* Language Selectors */}
       <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 mb-4">
@@ -278,7 +289,7 @@ export default function TranslatePage() {
         </Card>
       )}
 
-      {/* AI Error Alert */}
+      {/* AI Error Alert for Summarization */}
       {aiError && (
          <Alert variant="destructive" className="mt-4 md:mt-6">
           <AlertTriangle className="h-4 w-4" />

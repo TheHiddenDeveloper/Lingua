@@ -13,119 +13,86 @@ import { logTextToSpeech } from '@/ai/flows/log-history-flow';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { Label } from '@/components/ui/label';
-
-interface ApiLanguage {
-  code: string;
-  name: string;
-  apiName: string;
-}
-
-interface ApiSpeakersData {
-  [key: string]: string[];
-}
-
-const PRD_LANGUAGES_SUPPORTED_BY_TTS: ApiLanguage[] = [
-  { code: 'tw', name: 'Twi', apiName: 'Twi' },
-  { code: 'ee', name: 'Ewe', apiName: 'Ewe' },
-];
-
+import { useGhanaNLP } from '@/contexts/GhanaNLPContext'; // Import useGhanaNLP
 
 export default function TextToSpeechPage() {
   const [textToSpeak, setTextToSpeak] = useState('');
   const [selectedLanguageCode, setSelectedLanguageCode] = useState<string>('');
   const [selectedSpeakerId, setSelectedSpeakerId] = useState<string>('');
 
-  const [availableLanguages, setAvailableLanguages] = useState<ApiLanguage[]>([]);
-  const [allSpeakers, setAllSpeakers] = useState<ApiSpeakersData | null>(null);
   const [filteredSpeakers, setFilteredSpeakers] = useState<string[]>([]);
-
   const [audioSrc, setAudioSrc] = useState<string | null>(null);
-
-  const [isLoadingLanguages, setIsLoadingLanguages] = useState(false);
-  const [isLoadingSpeakers, setIsLoadingSpeakers] = useState(false);
   const [isSynthesizing, setIsSynthesizing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [pageError, setPageError] = useState<string | null>(null);
 
   const { toast } = useToast();
   const { user } = useAuth();
-  const apiKey = process.env.NEXT_PUBLIC_GHANANLP_API_KEY;
+  const { 
+    languages: availableLanguages, 
+    speakers: allSpeakers, 
+    isLoadingInitialData: isLoadingContextData, 
+    initialDataError: contextError,
+    fetchGhanaNLP, // Use fetchGhanaNLP from context
+    getApiKeyBasic, // Get API keys if needed for display or direct use (should be rare)
+    getApiKeyDev
+  } = useGhanaNLP();
 
-  const fetchLanguages = useCallback(async () => {
-    if (!apiKey) {
-      setError("API key is missing. Cannot fetch languages.");
-      toast({ title: 'Configuration Error', description: 'GhanaNLP API key is not configured.', variant: 'destructive' });
-      return;
+  // Effect to handle context loading state and errors
+  useEffect(() => {
+    if (contextError) {
+      setPageError(contextError);
+    } else {
+      setPageError(null); // Clear previous page errors if context loaded successfully
     }
-    setIsLoadingLanguages(true);
-    setError(null);
-    try {
-      const response = await fetch('https://translation-api.ghananlp.org/tts/v1/languages', {
-        headers: { 'Ocp-Apim-Subscription-Key': apiKey },
-      });
-      if (!response.ok) {
-        let errorResponseMessage = `Failed to fetch languages: ${response.statusText} (Status: ${response.status})`;
-        try { const errorData = await response.json(); if (errorData && errorData.message) errorResponseMessage = `Failed to fetch languages: ${errorData.message} (Status: ${response.status})`; } catch (e) {/*ignore*/}
-        throw new Error(errorResponseMessage);
-      }
-      const data = await response.json();
-      const apiLangObject = data.languages;
-      const supportedApiLangCodes = apiLangObject && typeof apiLangObject === 'object' ? Object.keys(apiLangObject) : [];
-      const filteredAppLanguages = PRD_LANGUAGES_SUPPORTED_BY_TTS.filter(prdLang => supportedApiLangCodes.includes(prdLang.code));
-      setAvailableLanguages(filteredAppLanguages);
-      if (filteredAppLanguages.length > 0) {
-        setSelectedLanguageCode(filteredAppLanguages[0].code);
-      } else {
-        const apiLangsString = supportedApiLangCodes.length > 0 ? supportedApiLangCodes.join(', ') : 'none provided by API';
-        const errorMessage = `The app is configured for Twi and Ewe Text-to-Speech. However, these languages (codes: 'tw', 'ee') were not found in the list of supported language codes returned by the GhanaNLP API. The API reported supporting codes: [${apiLangsString}]. Please verify your GhanaNLP API key and ensure it has permissions for TTS.`;
-        setError(errorMessage);
-        toast({ title: 'Language Configuration Issue', description: `App requires Twi/Ewe. API supports: [${apiLangsString}]. Check key/permissions.`, variant: 'warning', duration: 10000 });
-      }
-    } catch (err: any) {
-      setError(`Error fetching languages: ${err.message}`);
-      toast({ title: 'API Error', description: `Could not load languages: ${err.message}`, variant: 'destructive' });
-    } finally {
-      setIsLoadingLanguages(false);
+  }, [contextError]);
+
+  // Set initial language if available from context
+  useEffect(() => {
+    if (availableLanguages.length > 0 && !selectedLanguageCode) {
+      setSelectedLanguageCode(availableLanguages[0].code);
     }
-  }, [apiKey, toast]);
+  }, [availableLanguages, selectedLanguageCode]);
 
-  const fetchSpeakers = useCallback(async () => {
-    if (!apiKey) { setError("API key is missing. Cannot fetch speakers."); return; }
-    setIsLoadingSpeakers(true); setError(null);
-    try {
-      const response = await fetch('https://translation-api.ghananlp.org/tts/v1/speakers', { headers: { 'Ocp-Apim-Subscription-Key': apiKey } });
-      if (!response.ok) throw new Error(`Failed to fetch speakers: ${response.statusText} (Status: ${response.status})`);
-      const data = await response.json();
-      setAllSpeakers(data.speakers || {});
-    } catch (err: any) {
-      setError(`Error fetching speakers: ${err.message}`);
-      toast({ title: 'API Error', description: `Could not load speakers: ${err.message}`, variant: 'destructive' });
-    } finally {
-      setIsLoadingSpeakers(false);
-    }
-  }, [apiKey, toast]);
-
-  useEffect(() => { fetchLanguages(); fetchSpeakers(); }, [fetchLanguages, fetchSpeakers]);
-
+  // Update filtered speakers when language or allSpeakers change
   useEffect(() => {
     if (selectedLanguageCode && allSpeakers) {
       const currentLangObject = availableLanguages.find(lang => lang.code === selectedLanguageCode);
       const speakersForLang = currentLangObject ? allSpeakers[currentLangObject.apiName] || [] : [];
       setFilteredSpeakers(speakersForLang);
-      if (speakersForLang.length > 0) setSelectedSpeakerId(speakersForLang[0]); else setSelectedSpeakerId('');
-    } else { setFilteredSpeakers([]); setSelectedSpeakerId(''); }
-  }, [selectedLanguageCode, allSpeakers, availableLanguages]);
+      if (speakersForLang.length > 0) {
+        if (!selectedSpeakerId || !speakersForLang.includes(selectedSpeakerId)) {
+            setSelectedSpeakerId(speakersForLang[0]);
+        }
+      } else {
+         setSelectedSpeakerId('');
+      }
+    } else {
+      setFilteredSpeakers([]);
+      setSelectedSpeakerId('');
+    }
+  }, [selectedLanguageCode, allSpeakers, availableLanguages, selectedSpeakerId]);
+
 
   const handleSpeak = async () => {
-    if (!apiKey) { toast({ title: 'Configuration Error', description: 'GhanaNLP API key is not configured.', variant: 'destructive' }); return; }
+    const apiKeyBasic = getApiKeyBasic(); // Check if keys are present
+    const apiKeyDev = getApiKeyDev();
+    if (!apiKeyBasic && !apiKeyDev) { 
+        toast({ title: 'Configuration Error', description: 'GhanaNLP API keys are not configured.', variant: 'destructive' }); 
+        setPageError("GhanaNLP API Keys are missing. Please configure them.");
+        return; 
+    }
     if (!textToSpeak.trim()) { toast({ title: 'Input Required', description: 'Please enter text to speak.', variant: 'destructive' }); return; }
     if (!selectedLanguageCode || !selectedSpeakerId) { toast({ title: 'Selection Required', description: 'Please select a language and a speaker.', variant: 'destructive' }); return; }
-    setIsSynthesizing(true); setError(null); if (audioSrc) URL.revokeObjectURL(audioSrc); setAudioSrc(null);
+    
+    setIsSynthesizing(true); setPageError(null); if (audioSrc) URL.revokeObjectURL(audioSrc); setAudioSrc(null);
+    
     try {
-      const response = await fetch('https://translation-api.ghananlp.org/tts/v1/synthesize', {
+      const response = await fetchGhanaNLP('https://translation-api.ghananlp.org/tts/v1/synthesize', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Ocp-Apim-Subscription-Key': apiKey },
+        headers: { 'Content-Type': 'application/json' }, // Key is handled by fetchGhanaNLP
         body: JSON.stringify({ text: textToSpeak, language: selectedLanguageCode, speaker_id: selectedSpeakerId }),
       });
+
       const contentType = response.headers.get('Content-Type');
       if (response.ok && contentType && contentType.includes('audio/wav')) {
         const audioBlob = await response.blob();
@@ -138,13 +105,15 @@ export default function TextToSpeechPage() {
           catch (logError: any) { console.error("Failed to log TTS history:", logError); }
         }
       } else {
-        let errorMessage = `Synthesis failed with status: ${response.status}`;
-        if (contentType && contentType.includes('application/json')) { try { const errorData = await response.json(); errorMessage = errorData.message || errorData.detail || errorMessage; } catch (e) { /* Ignore */ } }
-        else { try { const errorText = await response.text(); errorMessage = errorText || errorMessage; } catch (e) { /* Ignore */ } }
+        // Error already thrown by fetchGhanaNLP if not ok or 403 handled
+        // This part is for unexpected content types on OK responses.
+         let errorMessage = `Synthesis failed. Unexpected response. Status: ${response.status}`;
+         if (contentType && contentType.includes('application/json')) { try { const errorData = await response.json(); errorMessage = errorData.message || errorData.detail || errorMessage; } catch (e) { /* Ignore */ } }
+         else { try { const errorText = await response.text(); errorMessage = errorText || errorMessage; } catch (e) { /* Ignore */ } }
         throw new Error(errorMessage);
       }
     } catch (err: any) {
-      setError(`Synthesis error: ${err.message}`);
+      setPageError(`Synthesis error: ${err.message}`);
       toast({ title: 'Synthesis Error', description: err.message, variant: 'destructive' });
     } finally {
       setIsSynthesizing(false);
@@ -155,13 +124,17 @@ export default function TextToSpeechPage() {
   const handleLanguageChange = (newLangCode: string) => { setSelectedLanguageCode(newLangCode); if (audioSrc) URL.revokeObjectURL(audioSrc); setAudioSrc(null); };
   const handleSpeakerChange = (newSpeakerId: string) => { setSelectedSpeakerId(newSpeakerId); if (audioSrc) URL.revokeObjectURL(audioSrc); setAudioSrc(null); }
 
+  if (isLoadingContextData) {
+    return <div className="flex justify-center items-center h-screen"><LoadingSpinner size="lg" /> <p className="ml-2">Loading TTS options...</p></div>;
+  }
+
   return (
     <div className="container mx-auto p-4 md:p-8 flex flex-col gap-6">
       <div className="text-center">
         <h1 className="font-headline text-3xl md:text-4xl font-bold">Text-to-Speech</h1>
         <p className="text-muted-foreground mt-1 md:mt-2">Convert text into Twi or Ewe speech.</p>
       </div>
-      {error && (<Alert variant="destructive" className="px-4 sm:px-6 py-3"><AlertTriangle className="h-4 w-4" /><AlertTitle>Error</AlertTitle><AlertDescription>{error}</AlertDescription></Alert>)}
+      {pageError && (<Alert variant="destructive" className="px-4 sm:px-6 py-3"><AlertTriangle className="h-4 w-4" /><AlertTitle>Error</AlertTitle><AlertDescription>{pageError}</AlertDescription></Alert>)}
       <Card className="card-animated w-full max-w-2xl mx-auto">
         <CardHeader className="px-4 sm:px-6 pt-4 pb-2">
           <CardTitle>Synthesize Speech</CardTitle>
@@ -172,11 +145,11 @@ export default function TextToSpeechPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="language-select-tts">Language</Label>
-              {isLoadingLanguages ? <LoadingSpinner size="sm" className="mt-2"/> : (
+              {(isLoadingContextData && availableLanguages.length === 0) ? <LoadingSpinner size="sm" className="mt-2"/> : (
                 <Select value={selectedLanguageCode} onValueChange={handleLanguageChange} disabled={availableLanguages.length === 0}>
                   <SelectTrigger id="language-select-tts" className="w-full mt-1"><SelectValue placeholder="Select language" /></SelectTrigger>
                   <SelectContent>
-                    {availableLanguages.length === 0 && !isLoadingLanguages && <SelectItem value="no-lang" disabled>No languages available</SelectItem>}
+                    {availableLanguages.length === 0 && !isLoadingContextData && <SelectItem value="no-lang" disabled>No languages available</SelectItem>}
                     {availableLanguages.map(lang => (<SelectItem key={lang.code} value={lang.code}>{lang.name}</SelectItem>))}
                   </SelectContent>
                 </Select>
@@ -184,19 +157,19 @@ export default function TextToSpeechPage() {
             </div>
             <div>
               <Label htmlFor="speaker-select-tts">Speaker</Label>
-              {isLoadingSpeakers ? <LoadingSpinner size="sm" className="mt-2"/> : (
+              {(isLoadingContextData && filteredSpeakers.length === 0 && !allSpeakers) ? <LoadingSpinner size="sm" className="mt-2"/> : (
                 <Select value={selectedSpeakerId} onValueChange={handleSpeakerChange} disabled={filteredSpeakers.length === 0 || !selectedLanguageCode}>
                   <SelectTrigger id="speaker-select-tts" className="w-full mt-1"><SelectValue placeholder="Select speaker" /></SelectTrigger>
                   <SelectContent>
-                    {filteredSpeakers.length === 0 && !isLoadingSpeakers && selectedLanguageCode && <SelectItem value="no-speaker" disabled>No speakers for language</SelectItem>}
-                    {filteredSpeakers.length === 0 && !isLoadingSpeakers && !selectedLanguageCode && <SelectItem value="no-speaker-select" disabled>Select language first</SelectItem>}
+                    {filteredSpeakers.length === 0 && !isLoadingContextData && selectedLanguageCode && <SelectItem value="no-speaker" disabled>No speakers for language</SelectItem>}
+                    {filteredSpeakers.length === 0 && !isLoadingContextData && !selectedLanguageCode && <SelectItem value="no-speaker-select" disabled>Select language first</SelectItem>}
                     {filteredSpeakers.map(speakerId => (<SelectItem key={speakerId} value={speakerId}>{speakerId}</SelectItem>))}
                   </SelectContent>
                 </Select>
               )}
             </div>
           </div>
-          <Button onClick={handleSpeak} disabled={isSynthesizing || isLoadingLanguages || isLoadingSpeakers || !textToSpeak.trim() || !selectedLanguageCode || !selectedSpeakerId} className="w-full sm:w-auto btn-animated mt-4" aria-label="Synthesize and play speech">
+          <Button onClick={handleSpeak} disabled={isSynthesizing || isLoadingContextData || !textToSpeak.trim() || !selectedLanguageCode || !selectedSpeakerId} className="w-full sm:w-auto btn-animated mt-4" aria-label="Synthesize and play speech">
             {isSynthesizing ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Volume2 className="mr-2 h-5 w-5" />}
             Synthesize
           </Button>

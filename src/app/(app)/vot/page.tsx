@@ -13,16 +13,18 @@ import { logVoiceToText } from '@/ai/flows/log-history-flow';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Label } from '@/components/ui/label';
+import { useGhanaNLP } from '@/contexts/GhanaNLPContext'; // Import useGhanaNLP
 
 const supportedApiLanguages = [
   { code: 'tw', name: 'Twi' },
+  // Add other languages if GhanaNLP ASR API supports them directly with these codes
 ];
 
 export default function VoiceToTextGhanaNLPPage() {
-  const [selectedLanguage, setSelectedLanguage] = useState('tw');
+  const [selectedLanguage, setSelectedLanguage] = useState('tw'); // Default to Twi
   const [isRecording, setIsRecording] = useState(false);
   const [transcribedText, setTranscribedText] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingTranscription, setIsLoadingTranscription] = useState(false);
   const [pageError, setPageError] = useState<string | null>(null);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -30,28 +32,44 @@ export default function VoiceToTextGhanaNLPPage() {
   const audioStreamRef = useRef<MediaStream | null>(null);
   const { toast } = useToast();
   const { user } = useAuth();
-  const apiKey = process.env.NEXT_PUBLIC_GHANANLP_API_KEY;
+  const { fetchGhanaNLP, getApiKeyBasic, getApiKeyDev } = useGhanaNLP(); // Use context
 
   const getSupportedMimeType = () => {
-    const types = ['audio/webm;codecs=opus', 'audio/ogg;codecs=opus', 'audio/webm', 'audio/ogg'];
+    const types = ['audio/webm;codecs=opus', 'audio/ogg;codecs=opus', 'audio/webm', 'audio/ogg', 'audio/wav'];
     for (const type of types) { if (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported(type)) return type; }
-    return '';
+    return 'audio/webm'; // Default if specific checks fail but MediaRecorder exists
   };
+  
   const mimeType = getSupportedMimeType();
 
+
   useEffect(() => {
-    if (!apiKey) { setPageError("API key is missing. Configure NEXT_PUBLIC_GHANANLP_API_KEY."); toast({ title: 'Config Error', description: 'GhanaNLP API key missing.', variant: 'destructive' }); }
-    if (typeof window !== 'undefined' && (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia)) { setPageError("Mic access not supported."); toast({ title: 'Browser Incompatible', description: 'Mic access not supported.', variant: 'destructive' }); }
-    if (mimeType === '') { console.warn("No preferred MIME type for MediaRecorder. Using browser default."); }
+    const apiKeyBasic = getApiKeyBasic();
+    const apiKeyDev = getApiKeyDev();
+    if (!apiKeyBasic && !apiKeyDev) { 
+        setPageError("API key is missing. Configure NEXT_PUBLIC_GHANANLP_API_KEY_BASIC or _DEV."); 
+        toast({ title: 'Config Error', description: 'GhanaNLP API key missing.', variant: 'destructive' }); 
+    }
+    if (typeof window !== 'undefined' && (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia)) { 
+        setPageError("Microphone access not supported by your browser."); 
+        toast({ title: 'Browser Incompatible', description: 'Mic access not supported.', variant: 'destructive' }); 
+    }
+    
     return () => {
       if (audioStreamRef.current) { audioStreamRef.current.getTracks().forEach(track => track.stop()); audioStreamRef.current = null; }
       if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") { mediaRecorderRef.current.stop(); }
     };
-  }, [apiKey, toast, mimeType]);
+  }, [getApiKeyBasic, getApiKeyDev, toast]);
 
   const startRecordingProcess = async () => {
     if (isRecording || typeof window === 'undefined' || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
-    if (!apiKey) { setPageError("API key missing."); toast({ title: 'Config Error', description: 'GhanaNLP API key missing.', variant: 'destructive' }); return; }
+    const apiKeyBasic = getApiKeyBasic();
+    const apiKeyDev = getApiKeyDev();
+    if (!apiKeyBasic && !apiKeyDev) { 
+        setPageError("API key missing."); 
+        toast({ title: 'Config Error', description: 'GhanaNLP API key missing.', variant: 'destructive' }); 
+        return; 
+    }
     setPageError(null); setTranscribedText('');
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -61,28 +79,28 @@ export default function VoiceToTextGhanaNLPPage() {
       audioChunksRef.current = [];
       mediaRecorderRef.current.ondataavailable = (event) => { if (event.data.size > 0) audioChunksRef.current.push(event.data); };
       mediaRecorderRef.current.onstop = async () => {
-        const recordedMimeType = mediaRecorderRef.current?.mimeType || audioChunksRef.current[0]?.type || 'audio/webm';
-        const audioBlob = new Blob(audioChunksRef.current, { type: recordedMimeType });
+        const recordedMimeTypeFinal = mediaRecorderRef.current?.mimeType || audioChunksRef.current[0]?.type || 'audio/webm';
+        const audioBlob = new Blob(audioChunksRef.current, { type: recordedMimeTypeFinal });
         audioChunksRef.current = [];
         if (audioStreamRef.current) { audioStreamRef.current.getTracks().forEach(track => track.stop()); audioStreamRef.current = null; }
-        if (audioBlob.size === 0) { setPageError("No audio recorded."); toast({ title: "Recording Error", description: "No audio captured.", variant: "destructive" }); setIsLoading(false); return; }
-        await transcribeAudio(audioBlob, recordedMimeType);
+        if (audioBlob.size === 0) { setPageError("No audio recorded."); toast({ title: "Recording Error", description: "No audio captured.", variant: "destructive" }); setIsLoadingTranscription(false); return; }
+        await transcribeAudio(audioBlob, recordedMimeTypeFinal);
       };
       mediaRecorderRef.current.onerror = (event: Event) => {
-        const mediaRecorderError = event as any;
+        const mediaRecorderError = event as any; // Cast to access potential 'error' property
         console.error("MediaRecorder error:", mediaRecorderError.error || mediaRecorderError);
         setPageError(`MediaRecorder error: ${mediaRecorderError.error?.name || 'Unknown recording error.'}`);
         toast({ title: "Recording Error", description: `Error during recording: ${mediaRecorderError.error?.name || 'Try again.'}`, variant: "destructive" });
-        setIsRecording(false); setIsLoading(false);
+        setIsRecording(false); setIsLoadingTranscription(false);
         if (audioStreamRef.current) { audioStreamRef.current.getTracks().forEach(track => track.stop()); audioStreamRef.current = null; }
       };
       mediaRecorderRef.current.start(); setIsRecording(true); toast({ title: "Recording Started", description: "Speak now..." });
     } catch (err: any) {
       console.error("Error accessing microphone:", err);
       let errMsg = err.message || "Could not access microphone.";
-      if (err.name === "NotAllowedError") errMsg = "Microphone permission denied.";
-      else if (err.name === "NotFoundError") errMsg = "No microphone found.";
-      else if (err.name === "NotReadableError") errMsg = "Microphone in use or inaccessible.";
+      if (err.name === "NotAllowedError") errMsg = "Microphone permission denied. Please enable it in your browser settings.";
+      else if (err.name === "NotFoundError") errMsg = "No microphone found. Please ensure one is connected and enabled.";
+      else if (err.name === "NotReadableError") errMsg = "Microphone is currently in use or inaccessible. Please check other applications or browser settings.";
       setPageError(errMsg); toast({ title: "Microphone Error", description: errMsg, variant: "destructive" });
     }
   };
@@ -90,33 +108,42 @@ export default function VoiceToTextGhanaNLPPage() {
   const stopRecordingProcess = () => {
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
-      setIsRecording(false); setIsLoading(true);
+      setIsRecording(false); setIsLoadingTranscription(true);
       toast({ title: "Recording Stopped", description: "Processing audio..." });
     }
   };
 
   const transcribeAudio = async (audioBlob: Blob, blobType: string) => {
-    if (!apiKey) { setPageError("API key missing."); toast({ title: 'API Error', description: 'GhanaNLP API key missing.', variant: 'destructive' }); setIsLoading(false); return; }
-    setIsLoading(true); setPageError(null);
+    const apiKeyBasic = getApiKeyBasic();
+    const apiKeyDev = getApiKeyDev();
+    if (!apiKeyBasic && !apiKeyDev) { 
+        setPageError("API key missing."); 
+        toast({ title: 'API Error', description: 'GhanaNLP API key missing.', variant: 'destructive' }); 
+        setIsLoadingTranscription(false); return; 
+    }
+    setIsLoadingTranscription(true); setPageError(null);
     const apiUrl = `https://translation-api.ghananlp.org/asr/v1/transcribe?language=${selectedLanguage}`;
     try {
-      const response = await fetch(apiUrl, { method: 'POST', headers: { 'Ocp-Apim-Subscription-Key': apiKey, 'Content-Type': blobType }, body: audioBlob });
-      if (response.ok) {
-        const resultText = await response.text();
-        setTranscribedText(resultText); toast({ title: "Transcription Successful" });
-        if (user && user.uid && resultText) { try { await logVoiceToText({ userId: user.uid, recognizedSpeech: resultText, detectedLanguage: selectedLanguage }); } catch (logError: any) { console.error("Failed to log VOT history:", logError); } }
-      } else {
-        let errorData; let errorMessage = `Transcription API failed: ${response.status} ${response.statusText}`;
-        try { const contentType = response.headers.get("content-type"); if (contentType && contentType.includes("application/json")) { errorData = await response.json(); errorMessage = errorData?.message || errorData?.detail || `API Error: ${response.status} - ${JSON.stringify(errorData)}`; } else { errorData = await response.text(); errorMessage = errorData || errorMessage; } } catch (e) { console.error("Error parsing API error response:", e); }
-        console.error("Transcription API error:", errorMessage);
-        if (errorMessage.toLowerCase().includes('invalid subscription key') || errorMessage.toLowerCase().includes('access denied')) { setPageError(`API Key Error: ${errorMessage}. Check key/permissions.`); } else { setPageError(`API Error: ${errorMessage.substring(0, 300)}`); }
-        toast({ title: 'Transcription Error', description: errorMessage.substring(0, 100), variant: 'destructive' });
-      }
+      // Use fetchGhanaNLP from context which handles key management
+      const response = await fetchGhanaNLP(apiUrl, { 
+        method: 'POST', 
+        headers: { 'Content-Type': blobType }, // Key is handled by fetchGhanaNLP
+        body: audioBlob 
+      });
+      
+      // fetchGhanaNLP throws on non-ok or handles 403 internally for retry.
+      // If it resolves, it means the call was successful (possibly after a retry).
+      const resultText = await response.text(); // Assuming text response for ASR
+      setTranscribedText(resultText); toast({ title: "Transcription Successful" });
+      if (user && user.uid && resultText) { try { await logVoiceToText({ userId: user.uid, recognizedSpeech: resultText, detectedLanguage: selectedLanguage }); } catch (logError: any) { console.error("Failed to log VOT history:", logError); } }
     } catch (err: any) {
-      console.error("Transcription fetch error:", err);
-      setPageError(`Network error: ${err.message}`);
-      toast({ title: 'Transcription Failed', description: `Error: ${err.message}`, variant: 'destructive' });
-    } finally { setIsLoading(false); }
+      console.error("Transcription error:", err);
+      const errorMsg = err.message || 'An unexpected error occurred during transcription.';
+      setPageError(errorMsg);
+      toast({ title: 'Transcription Failed', description: errorMsg, variant: 'destructive' });
+    } finally {
+      setIsLoadingTranscription(false);
+    }
   };
 
   const handleToggleRecording = () => { if (isRecording) stopRecordingProcess(); else startRecordingProcess(); };
@@ -125,7 +152,7 @@ export default function VoiceToTextGhanaNLPPage() {
     <div className="container mx-auto p-4 md:p-8 flex flex-col gap-6">
       <div className="text-center">
         <h1 className="font-headline text-3xl md:text-4xl font-bold">Voice-to-Text</h1>
-        <p className="text-muted-foreground mt-1 md:mt-2">Record and transcribe Twi audio.</p>
+        <p className="text-muted-foreground mt-1 md:mt-2">Record and transcribe Twi audio using GhanaNLP.</p>
       </div>
       {pageError && (<Alert variant="destructive" className="my-4 px-4 sm:px-6 py-3"><AlertTriangle className="h-4 w-4" /><AlertTitle>Error</AlertTitle><AlertDescription>{pageError}</AlertDescription></Alert>)}
       <Card className="card-animated w-full max-w-2xl mx-auto">
@@ -142,13 +169,13 @@ export default function VoiceToTextGhanaNLPPage() {
                     <SelectContent> {supportedApiLanguages.map(lang => (<SelectItem key={lang.code} value={lang.code}>{lang.name}</SelectItem>))} </SelectContent>
                 </Select>
             </div>
-            <Button onClick={handleToggleRecording} disabled={isLoading || !apiKey || (typeof window !== 'undefined' && (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia))} className={`w-full sm:flex-1 btn-animated ${isRecording ? 'bg-destructive hover:bg-destructive/90' : ''}`} aria-label={isRecording ? "Stop recording" : "Start recording"}>
+            <Button onClick={handleToggleRecording} disabled={isLoadingTranscription || (!getApiKeyBasic() && !getApiKeyDev()) || (typeof window !== 'undefined' && (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia))} className={`w-full sm:flex-1 btn-animated ${isRecording ? 'bg-destructive hover:bg-destructive/90' : ''}`} aria-label={isRecording ? "Stop recording" : "Start recording"}>
               {isRecording ? <StopCircle className="mr-2 h-5 w-5" /> : <Mic className="mr-2 h-5 w-5" />}
-              {isLoading && isRecording ? 'Stopping...' : isRecording ? 'Stop Recording' : 'Start Recording'}
-              {isLoading && !isRecording && <Loader2 className="ml-2 h-5 w-5 animate-spin" />}
+              {isLoadingTranscription && isRecording ? 'Stopping...' : isRecording ? 'Stop Recording' : 'Start Recording'}
+              {isLoadingTranscription && !isRecording && <Loader2 className="ml-2 h-5 w-5 animate-spin" />}
             </Button>
           </div>
-          {isLoading && !isRecording && (
+          {isLoadingTranscription && !isRecording && (
              <div className="flex items-center justify-center p-4"><Loader2 className="h-8 w-8 animate-spin text-primary" /><p className="ml-2 text-muted-foreground">Transcribing...</p></div>
           )}
           <Label htmlFor="transcription-output-vot" className="sr-only">Transcription Output</Label>
