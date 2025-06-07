@@ -107,8 +107,13 @@ export default function TranslatePage() {
       toast({ title: 'Translation Complete', description: 'Text translated successfully.' });
       if (user && user.uid) {
         try {
-          await logTextTranslation({ userId: user.uid, originalText: inputText, translatedText, sourceLanguage: sourceLang, targetLanguage: targetLang });
-        } catch (logError: any) { console.error("Failed to log translation history:", logError); }
+          const logResult = await logTextTranslation({ userId: user.uid, originalText: inputText, translatedText, sourceLanguage: sourceLang, targetLanguage: targetLang });
+          if (!logResult.success) {
+            console.warn('Failed to log translation to history (server-side):', logResult.error);
+          }
+        } catch (logError: any) { 
+          console.error("Client-side error calling logTextTranslation flow:", logError);
+        }
       }
     } catch (error: any) {
       console.error("Translation API call error:", error);

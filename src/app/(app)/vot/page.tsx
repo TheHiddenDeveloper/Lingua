@@ -135,7 +135,16 @@ export default function VoiceToTextGhanaNLPPage() {
       // If it resolves, it means the call was successful (possibly after a retry).
       const resultText = await response.text(); // Assuming text response for ASR
       setTranscribedText(resultText); toast({ title: "Transcription Successful" });
-      if (user && user.uid && resultText) { try { await logVoiceToText({ userId: user.uid, recognizedSpeech: resultText, detectedLanguage: selectedLanguage }); } catch (logError: any) { console.error("Failed to log VOT history:", logError); } }
+      if (user && user.uid && resultText) { 
+        try { 
+          const logResult = await logVoiceToText({ userId: user.uid, recognizedSpeech: resultText, detectedLanguage: selectedLanguage }); 
+          if (!logResult.success) {
+            console.warn('Failed to log VOT to history (server-side):', logResult.error);
+          }
+        } catch (logError: any) { 
+          console.error("Client-side error calling logVoiceToText flow:", logError);
+        } 
+      }
     } catch (err: any) {
       console.error("Transcription error:", err);
       const errorMsg = err.message || 'An unexpected error occurred during transcription.';

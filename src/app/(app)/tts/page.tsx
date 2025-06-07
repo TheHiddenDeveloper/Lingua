@@ -101,8 +101,15 @@ export default function TextToSpeechPage() {
         setAudioSrc(audioUrl);
         toast({ title: 'Speech Synthesized', description: 'Audio ready to play.' });
         if (user && user.uid) {
-          try { await logTextToSpeech({ userId: user.uid, spokenText: textToSpeak, selectedLanguage: selectedLanguageCode, speakerId: selectedSpeakerId }); }
-          catch (logError: any) { console.error("Failed to log TTS history:", logError); }
+          try { 
+            const logResult = await logTextToSpeech({ userId: user.uid, spokenText: textToSpeak, selectedLanguage: selectedLanguageCode, speakerId: selectedSpeakerId });
+            if (!logResult.success) {
+              console.warn('Failed to log TTS to history (server-side):', logResult.error);
+            }
+          }
+          catch (logError: any) { 
+            console.error("Client-side error calling logTextToSpeech flow:", logError);
+          }
         }
       } else {
         // Error already thrown by fetchGhanaNLP if not ok or 403 handled

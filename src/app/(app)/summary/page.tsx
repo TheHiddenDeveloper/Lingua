@@ -63,8 +63,13 @@ export default function SummaryPage() {
 
       if (user.uid && result.summary) {
         try {
-          await logTextSummary({ userId: user.uid, originalText: inputText, summarizedText: result.summary, language: languageName });
-        } catch (logError: any) { console.error("Failed to log summary history:", logError); }
+          const logResult = await logTextSummary({ userId: user.uid, originalText: inputText, summarizedText: result.summary, language: languageName });
+          if (!logResult.success) {
+            console.warn('Failed to log summary to history (server-side):', logResult.error);
+          }
+        } catch (logError: any) { 
+          console.error("Client-side error calling logTextSummary flow:", logError);
+        }
       }
     } catch (err: any) {
       console.error("Summarization error:", err);
