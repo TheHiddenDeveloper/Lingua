@@ -43,9 +43,10 @@ export const GhanaNLPProvider = ({ children }: { children: ReactNode }) => {
   const apiKeyBasic = process.env.NEXT_PUBLIC_GHANANLP_API_KEY_BASIC;
   const apiKeyDev = process.env.NEXT_PUBLIC_GHANANLP_API_KEY_DEV;
 
-  const [activeKey, setActiveKey] = useState<string | undefined>(apiKeyBasic);
-  const [activeKeyType, setActiveKeyType] = useState<'basic' | 'dev'>('basic');
-  const [basicKeyHasFailed, setBasicKeyHasFailed] = useState(false);
+  // Start with DEV key as primary
+  const [activeKey, setActiveKey] = useState<string | undefined>(apiKeyDev || apiKeyBasic); // Fallback to basic if dev is not set
+  const [activeKeyType, setActiveKeyType] = useState<'basic' | 'dev'>(apiKeyDev ? 'dev' : 'basic');
+  const [devKeyHasFailed, setDevKeyHasFailed] = useState(false);
 
   const { toast } = useToast();
 
@@ -61,35 +62,36 @@ export const GhanaNLPProvider = ({ children }: { children: ReactNode }) => {
     let currentKeyToUse = activeKey;
     let currentKeyType = activeKeyType;
 
-    if (basicKeyHasFailed && activeKeyType === 'basic' && apiKeyDev) {
-      // If basic failed previously, and we are somehow trying basic again, force dev
-      currentKeyToUse = apiKeyDev;
-      currentKeyType = 'dev';
-      if (!isRetryCall) setActiveKey(apiKeyDev); // Update global active key if not already dev
-      if (!isRetryCall) setActiveKeyType('dev');
+    // If dev key previously failed and we are somehow trying dev again, force basic (if available)
+    if (devKeyHasFailed && activeKeyType === 'dev' && apiKeyBasic) {
+      currentKeyToUse = apiKeyBasic;
+      currentKeyType = 'basic';
+      if (!isRetryCall) setActiveKey(apiKeyBasic); 
+      if (!isRetryCall) setActiveKeyType('basic');
     }
     
     try {
       const response = await _fetchWithKey(endpoint, options, currentKeyToUse, currentKeyType);
       if (response.status === 403) {
-        if (currentKeyType === 'basic' && !basicKeyHasFailed && apiKeyDev) {
-          setBasicKeyHasFailed(true);
-          setActiveKey(apiKeyDev);
-          setActiveKeyType('dev');
+        if (currentKeyType === 'dev' && !devKeyHasFailed && apiKeyBasic) {
+          // Dev key failed, try switching to basic key
+          setDevKeyHasFailed(true);
+          setActiveKey(apiKeyBasic);
+          setActiveKeyType('basic');
           toast({
             title: 'API Key Switched',
-            description: `Switched to dev API key due to an issue with the basic key. Retrying request...`,
+            description: `Switched to basic API key due to an issue with the dev key. Retrying request...`,
             variant: 'default',
           });
-          // Retry the request ONCE with the dev key
-          return _fetchWithKey(endpoint, options, apiKeyDev, 'dev');
+          // Retry the request ONCE with the basic key
+          return _fetchWithKey(endpoint, options, apiKeyBasic, 'basic');
         } else {
-          // Basic key failed and no dev key, or dev key also failed
+          // Dev key failed and no basic key, or basic key also failed (after dev failed)
           let errorMessage = `GhanaNLP API Error (${currentKeyType} key): Access Forbidden (403).`;
-          if (currentKeyType === 'dev' && basicKeyHasFailed) {
-            errorMessage = `GhanaNLP API Error: Both basic and dev keys resulted in Access Forbidden (403).`;
-          } else if (currentKeyType === 'basic' && !apiKeyDev) {
-            errorMessage = `GhanaNLP API Error (basic key): Access Forbidden (403). No dev key configured to fallback.`;
+          if (currentKeyType === 'basic' && devKeyHasFailed) {
+            errorMessage = `GhanaNLP API Error: Both dev and basic keys resulted in Access Forbidden (403).`;
+          } else if (currentKeyType === 'dev' && !apiKeyBasic) {
+            errorMessage = `GhanaNLP API Error (dev key): Access Forbidden (403). No basic key configured to fallback.`;
           }
           const error = new Error(errorMessage);
           (error as any).response = response; // Attach response for more details if needed
@@ -108,12 +110,21 @@ export const GhanaNLPProvider = ({ children }: { children: ReactNode }) => {
       console.error('GhanaNLP Fetch Error:', error);
       throw error; // Re-throw to be handled by the calling component
     }
-  }, [activeKey, activeKeyType, basicKeyHasFailed, apiKeyBasic, apiKeyDev, toast]);
+  }, [activeKey, activeKeyType, devKeyHasFailed, apiKeyBasic, apiKeyDev, toast]);
 
 
   useEffect(() => {
+    // Ensure primary key is set correctly on mount if both exist
+    if (apiKeyDev) {
+        setActiveKey(apiKeyDev);
+        setActiveKeyType('dev');
+    } else if (apiKeyBasic) {
+        setActiveKey(apiKeyBasic);
+        setActiveKeyType('basic');
+    }
+
     const loadInitialData = async () => {
-      if (!apiKeyBasic && !apiKeyDev) {
+      if (!apiKeyDev && !apiKeyBasic) { // Adjusted check
         setInitialDataError("No GhanaNLP API keys configured.");
         setIsLoadingInitialData(false);
         toast({ title: 'Configuration Error', description: 'GhanaNLP API keys are missing.', variant: 'destructive' });
@@ -123,6 +134,7 @@ export const GhanaNLPProvider = ({ children }: { children: ReactNode }) => {
       setInitialDataError(null);
       try {
         // Fetch Languages
+        // The fetchGhanaNLP will use the active key (dev by default, then basic if dev fails)
         const langResponse = await fetchGhanaNLP('https://translation-api.ghananlp.org/tts/v1/languages', {});
         const langData = await langResponse.json();
         const apiLangObject = langData.languages;
@@ -132,7 +144,7 @@ export const GhanaNLPProvider = ({ children }: { children: ReactNode }) => {
         setLanguages(filteredAppLanguages);
 
         if (filteredAppLanguages.length === 0) {
-            const apiLangsString = supportedApiLangCodes.length > 0 ? supportedApiLangCodes.join(', ') : 'none provided by API';
+            const apiLangsString = supportedApiLangsString.length > 0 ? supportedApiLangsString.join(', ') : 'none provided by API';
             const langErrorMessage = `App requires Twi/Ewe for TTS. API reported supporting: [${apiLangsString}]. Check key/permissions.`;
             setInitialDataError(langErrorMessage); // Set error but continue to fetch speakers
             toast({ title: 'Language Config Issue', description: langErrorMessage, variant: 'warning', duration: 10000 });
@@ -171,3 +183,4 @@ export const useGhanaNLP = (): GhanaNLPContextType => {
   }
   return context;
 };
+
