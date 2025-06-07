@@ -19,7 +19,7 @@ const BaseHistoryInputSchema = z.object({
 });
 
 // Schema for Text Translation logging
-export const TextTranslationHistoryInputSchema = BaseHistoryInputSchema.extend({
+const TextTranslationHistoryInputSchema = BaseHistoryInputSchema.extend({
   originalText: z.string().describe('The original text before translation.'),
   translatedText: z.string().describe('The translated text.'),
   sourceLanguage: z.string().describe('The source language code (e.g., "en").'),
@@ -28,14 +28,14 @@ export const TextTranslationHistoryInputSchema = BaseHistoryInputSchema.extend({
 export type TextTranslationHistoryInput = z.infer<typeof TextTranslationHistoryInputSchema>;
 
 // Schema for Voice-to-Text logging
-export const VoiceToTextHistoryInputSchema = BaseHistoryInputSchema.extend({
+const VoiceToTextHistoryInputSchema = BaseHistoryInputSchema.extend({
   recognizedSpeech: z.string().describe('The text transcribed from speech.'),
   detectedLanguage: z.string().describe('The language detected or used for transcription (e.g., "tw").'),
 });
 export type VoiceToTextHistoryInput = z.infer<typeof VoiceToTextHistoryInputSchema>;
 
 // Schema for Text-to-Speech logging
-export const TextToSpeechHistoryInputSchema = BaseHistoryInputSchema.extend({
+const TextToSpeechHistoryInputSchema = BaseHistoryInputSchema.extend({
   spokenText: z.string().describe('The text that was synthesized into speech.'),
   selectedLanguage: z.string().describe('The language selected for speech synthesis (e.g., "tw").'),
   speakerId: z.string().optional().describe('The speaker ID used for synthesis, if applicable.'),
@@ -43,7 +43,7 @@ export const TextToSpeechHistoryInputSchema = BaseHistoryInputSchema.extend({
 export type TextToSpeechHistoryInput = z.infer<typeof TextToSpeechHistoryInputSchema>;
 
 // Schema for Text Summarization logging
-export const TextSummaryHistoryInputSchema = BaseHistoryInputSchema.extend({
+const TextSummaryHistoryInputSchema = BaseHistoryInputSchema.extend({
   originalText: z.string().describe('The original long-form text.'),
   summarizedText: z.string().describe('The AI-generated summary.'),
   language: z.string().describe('The language of the original text.'),
@@ -60,7 +60,7 @@ export type LogHistoryOutput = z.infer<typeof LogHistoryOutputSchema>;
 
 
 // Flow to log text translation
-export const logTextTranslationFlow = ai.defineFlow(
+const logTextTranslationFlow = ai.defineFlow(
   {
     name: 'logTextTranslationFlow',
     inputSchema: TextTranslationHistoryInputSchema,
@@ -90,7 +90,7 @@ export async function logTextTranslation(input: TextTranslationHistoryInput): Pr
 
 
 // Flow to log voice-to-text
-export const logVoiceToTextFlow = ai.defineFlow(
+const logVoiceToTextFlow = ai.defineFlow(
   {
     name: 'logVoiceToTextFlow',
     inputSchema: VoiceToTextHistoryInputSchema,
@@ -119,7 +119,7 @@ export async function logVoiceToText(input: VoiceToTextHistoryInput): Promise<Lo
 }
 
 // Flow to log text-to-speech
-export const logTextToSpeechFlow = ai.defineFlow(
+const logTextToSpeechFlow = ai.defineFlow(
   {
     name: 'logTextToSpeechFlow',
     inputSchema: TextToSpeechHistoryInputSchema,
@@ -148,7 +148,7 @@ export async function logTextToSpeech(input: TextToSpeechHistoryInput): Promise<
 }
 
 // Flow to log text summary
-export const logTextSummaryFlow = ai.defineFlow(
+const logTextSummaryFlow = ai.defineFlow(
   {
     name: 'logTextSummaryFlow',
     inputSchema: TextSummaryHistoryInputSchema,
