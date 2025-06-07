@@ -17,7 +17,7 @@ import {
   SidebarMenuButton,
   SidebarInset,
 } from '@/components/ui/sidebar';
-import { Languages, Volume2, Mic, Settings, History, FileText, Globe, HelpCircle } from 'lucide-react';
+import { Languages, Volume2, Mic, Settings, History, FileText, Globe, HelpCircle, Info } from 'lucide-react';
 
 export default function AppLayout({ children }: { children: ReactNode }) {
   const { user, loading, logout } = useAuth();
@@ -129,6 +129,18 @@ export default function AppLayout({ children }: { children: ReactNode }) {
               <SidebarMenuItem>
                 <SidebarMenuButton
                   asChild
+                  isActive={pathname === '/about'}
+                  tooltip={{content: "About LinguaGhana", side: "right", align: "center"}}
+                >
+                  <Link href="/about">
+                    <Info className="h-5 w-5" />
+                    <span className="group-data-[collapsible=icon]:hidden">About</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
                   isActive={pathname === '/settings'}
                   tooltip={{content: "Settings", side: "right", align: "center"}}
                 >
@@ -155,3 +167,5 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     </SidebarProvider>
   );
 }
+
+    
