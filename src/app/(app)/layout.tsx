@@ -17,7 +17,7 @@ import {
   SidebarMenuButton,
   SidebarInset,
 } from '@/components/ui/sidebar';
-import { Languages, Volume2, Mic, Settings, History, FileText, Globe, HelpCircle } from 'lucide-react'; // Added HelpCircle
+import { Languages, Volume2, Mic, Settings, History, FileText, Globe, HelpCircle } from 'lucide-react';
 
 export default function AppLayout({ children }: { children: ReactNode }) {
   const { user, loading, logout } = useAuth();
@@ -114,7 +114,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-              {/* New Help Page Link */}
               <SidebarMenuItem>
                 <SidebarMenuButton
                   asChild
