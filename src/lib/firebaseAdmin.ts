@@ -1,5 +1,4 @@
 
-'use server'; // This directive can be problematic for files exporting non-async objects.
 // Removed 'use server;' as this file exports SDK instances, not just async functions.
 
 import { initializeApp, cert, getApps, type App as AdminApp } from 'firebase-admin/app';
