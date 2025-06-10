@@ -62,14 +62,17 @@ export default function SummaryPage() {
       toast({ title: 'Summary Generated', description: 'Text summarized successfully.' });
 
       if (user.uid && result.summary) {
-        try {
-          const logResult = await logTextSummary({ userId: user.uid, originalText: inputText, summarizedText: result.summary, language: languageName });
-          if (!logResult.success) {
-            console.warn('Failed to log summary to history (server-side):', logResult.error);
-          }
-        } catch (logError: any) { 
-          console.error("Client-side error calling logTextSummary flow:", logError);
-        }
+        logTextSummary({ userId: user.uid, originalText: inputText, summarizedText: result.summary, language: languageName })
+        .then(logResult => {
+            if (!logResult.success) {
+                console.warn('Failed to log summary to history (server-side):', logResult.error);
+                toast({ title: 'History Logging Failed', description: `Could not save summary to history: ${logResult.error || 'Unknown error'}`, variant: 'destructive'});
+            }
+        })
+        .catch (logError => {
+            console.error("Client-side error calling logTextSummary flow:", logError);
+            toast({ title: 'History Logging Error', description: `Error trying to save summary to history: ${logError.message || 'Unknown error'}`, variant: 'destructive'});
+        });
       }
     } catch (err: any) {
       console.error("Summarization error:", err);

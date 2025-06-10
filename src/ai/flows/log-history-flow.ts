@@ -67,8 +67,11 @@ const logTextTranslationFlow = ai.defineFlow(
     outputSchema: LogHistoryOutputSchema,
   },
   async (input) => {
+    console.log('[logTextTranslationFlow] Initiated. Input:', JSON.stringify(input));
     try {
       const { userId, ...data } = input;
+      const path = `userHistories/${userId}/textTranslations`;
+      console.log(`[logTextTranslationFlow] Attempting to log to Firestore. ProjectID: ${adminDb.app.options.projectId}, Path: ${path}, Data:`, JSON.stringify(data));
       const docRef = await adminDb
         .collection('userHistories')
         .doc(userId)
@@ -77,9 +80,10 @@ const logTextTranslationFlow = ai.defineFlow(
           ...data,
           timestamp: adminTimestamp(),
         });
+      console.log('[logTextTranslationFlow] Successfully logged. Document ID:', docRef.id);
       return { success: true, id: docRef.id };
     } catch (error: any) {
-      console.error('Error logging text translation:', error);
+      console.error('[logTextTranslationFlow] Error logging text translation:', error.message, error.stack);
       return { success: false, error: error.message || 'Failed to log text translation.' };
     }
   }
@@ -97,8 +101,11 @@ const logVoiceToTextFlow = ai.defineFlow(
     outputSchema: LogHistoryOutputSchema,
   },
   async (input) => {
+    console.log('[logVoiceToTextFlow] Initiated. Input:', JSON.stringify(input));
     try {
       const { userId, ...data } = input;
+      const path = `userHistories/${userId}/voiceToText`;
+      console.log(`[logVoiceToTextFlow] Attempting to log to Firestore. ProjectID: ${adminDb.app.options.projectId}, Path: ${path}, Data:`, JSON.stringify(data));
       const docRef = await adminDb
         .collection('userHistories')
         .doc(userId)
@@ -107,9 +114,10 @@ const logVoiceToTextFlow = ai.defineFlow(
           ...data,
           timestamp: adminTimestamp(),
         });
+      console.log('[logVoiceToTextFlow] Successfully logged. Document ID:', docRef.id);
       return { success: true, id: docRef.id };
     } catch (error: any) {
-      console.error('Error logging voice-to-text:', error);
+      console.error('[logVoiceToTextFlow] Error logging voice-to-text:', error.message, error.stack);
       return { success: false, error: error.message || 'Failed to log voice-to-text.' };
     }
   }
@@ -126,8 +134,11 @@ const logTextToSpeechFlow = ai.defineFlow(
     outputSchema: LogHistoryOutputSchema,
   },
   async (input) => {
+    console.log('[logTextToSpeechFlow] Initiated. Input:', JSON.stringify(input));
     try {
       const { userId, ...data } = input;
+      const path = `userHistories/${userId}/textToSpeech`;
+      console.log(`[logTextToSpeechFlow] Attempting to log to Firestore. ProjectID: ${adminDb.app.options.projectId}, Path: ${path}, Data:`, JSON.stringify(data));
       const docRef = await adminDb
         .collection('userHistories')
         .doc(userId)
@@ -136,9 +147,10 @@ const logTextToSpeechFlow = ai.defineFlow(
           ...data,
           timestamp: adminTimestamp(),
         });
+      console.log('[logTextToSpeechFlow] Successfully logged. Document ID:', docRef.id);
       return { success: true, id: docRef.id };
     } catch (error: any) {
-      console.error('Error logging text-to-speech:', error);
+      console.error('[logTextToSpeechFlow] Error logging text-to-speech:', error.message, error.stack);
       return { success: false, error: error.message || 'Failed to log text-to-speech.' };
     }
   }
@@ -155,8 +167,11 @@ const logTextSummaryFlow = ai.defineFlow(
     outputSchema: LogHistoryOutputSchema,
   },
   async (input) => {
+    console.log('[logTextSummaryFlow] Initiated. Input:', JSON.stringify(input));
     try {
       const { userId, ...data } = input;
+      const path = `userHistories/${userId}/textSummaries`;
+      console.log(`[logTextSummaryFlow] Attempting to log to Firestore. ProjectID: ${adminDb.app.options.projectId}, Path: ${path}, Data:`, JSON.stringify(data));
       const docRef = await adminDb
         .collection('userHistories')
         .doc(userId)
@@ -165,9 +180,10 @@ const logTextSummaryFlow = ai.defineFlow(
           ...data,
           timestamp: adminTimestamp(),
         });
+      console.log('[logTextSummaryFlow] Successfully logged. Document ID:', docRef.id);
       return { success: true, id: docRef.id };
     } catch (error: any) {
-      console.error('Error logging text summary:', error);
+      console.error('[logTextSummaryFlow] Error logging text summary:', error.message, error.stack);
       return { success: false, error: error.message || 'Failed to log text summary.' };
     }
   }

@@ -153,9 +153,11 @@ export default function TranslatePage() {
         }).then(logResult => {
           if (!logResult.success) {
             console.warn('Failed to log translation to history (server-side):', logResult.error);
+            toast({ title: 'History Logging Failed', description: `Could not save translation to history: ${logResult.error || 'Unknown error'}`, variant: 'destructive'});
           }
         }).catch(logError => {
           console.error("Client-side error calling logTextTranslation flow:", logError);
+          toast({ title: 'History Logging Error', description: `Error trying to save translation to history: ${logError.message || 'Unknown error'}`, variant: 'destructive'});
         });
       }
 

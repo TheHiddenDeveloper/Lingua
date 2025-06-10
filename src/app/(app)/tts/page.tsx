@@ -32,28 +32,25 @@ export default function TextToSpeechPage() {
     speakers: allSpeakers, 
     isLoadingInitialData: isLoadingContextData, 
     initialDataError: contextError,
-    fetchGhanaNLP, // Use fetchGhanaNLP from context
-    getApiKeyBasic, // Get API keys if needed for display or direct use (should be rare)
+    fetchGhanaNLP, 
+    getApiKeyBasic, 
     getApiKeyDev
   } = useGhanaNLP();
 
-  // Effect to handle context loading state and errors
   useEffect(() => {
     if (contextError) {
       setPageError(contextError);
     } else {
-      setPageError(null); // Clear previous page errors if context loaded successfully
+      setPageError(null); 
     }
   }, [contextError]);
 
-  // Set initial language if available from context
   useEffect(() => {
     if (availableLanguages.length > 0 && !selectedLanguageCode) {
       setSelectedLanguageCode(availableLanguages[0].code);
     }
   }, [availableLanguages, selectedLanguageCode]);
 
-  // Update filtered speakers when language or allSpeakers change
   useEffect(() => {
     if (selectedLanguageCode && allSpeakers) {
       const currentLangObject = availableLanguages.find(lang => lang.code === selectedLanguageCode);
@@ -74,7 +71,7 @@ export default function TextToSpeechPage() {
 
 
   const handleSpeak = async () => {
-    const apiKeyBasic = getApiKeyBasic(); // Check if keys are present
+    const apiKeyBasic = getApiKeyBasic(); 
     const apiKeyDev = getApiKeyDev();
     if (!apiKeyBasic && !apiKeyDev) { 
         toast({ title: 'Configuration Error', description: 'GhanaNLP API keys are not configured.', variant: 'destructive' }); 
@@ -89,7 +86,7 @@ export default function TextToSpeechPage() {
     try {
       const response = await fetchGhanaNLP('https://translation-api.ghananlp.org/tts/v1/synthesize', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }, // Key is handled by fetchGhanaNLP
+        headers: { 'Content-Type': 'application/json' }, 
         body: JSON.stringify({ text: textToSpeak, language: selectedLanguageCode, speaker_id: selectedSpeakerId }),
       });
 
@@ -101,19 +98,19 @@ export default function TextToSpeechPage() {
         setAudioSrc(audioUrl);
         toast({ title: 'Speech Synthesized', description: 'Audio ready to play.' });
         if (user && user.uid) {
-          try { 
-            const logResult = await logTextToSpeech({ userId: user.uid, spokenText: textToSpeak, selectedLanguage: selectedLanguageCode, speakerId: selectedSpeakerId });
+          logTextToSpeech({ userId: user.uid, spokenText: textToSpeak, selectedLanguage: selectedLanguageCode, speakerId: selectedSpeakerId })
+          .then(logResult => {
             if (!logResult.success) {
-              console.warn('Failed to log TTS to history (server-side):', logResult.error);
+                console.warn('Failed to log TTS to history (server-side):', logResult.error);
+                toast({ title: 'History Logging Failed', description: `Could not save TTS to history: ${logResult.error || 'Unknown error'}`, variant: 'destructive'});
             }
-          }
-          catch (logError: any) { 
+          })
+          .catch(logError => {
             console.error("Client-side error calling logTextToSpeech flow:", logError);
-          }
+            toast({ title: 'History Logging Error', description: `Error trying to save TTS to history: ${logError.message || 'Unknown error'}`, variant: 'destructive'});
+          });
         }
       } else {
-        // Error already thrown by fetchGhanaNLP if not ok or 403 handled
-        // This part is for unexpected content types on OK responses.
          let errorMessage = `Synthesis failed. Unexpected response. Status: ${response.status}`;
          if (contentType && contentType.includes('application/json')) { try { const errorData = await response.json(); errorMessage = errorData.message || errorData.detail || errorMessage; } catch (e) { /* Ignore */ } }
          else { try { const errorText = await response.text(); errorMessage = errorText || errorMessage; } catch (e) { /* Ignore */ } }

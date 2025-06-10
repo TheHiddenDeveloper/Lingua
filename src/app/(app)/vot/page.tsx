@@ -124,26 +124,26 @@ export default function VoiceToTextGhanaNLPPage() {
     setIsLoadingTranscription(true); setPageError(null);
     const apiUrl = `https://translation-api.ghananlp.org/asr/v1/transcribe?language=${selectedLanguage}`;
     try {
-      // Use fetchGhanaNLP from context which handles key management
       const response = await fetchGhanaNLP(apiUrl, { 
         method: 'POST', 
-        headers: { 'Content-Type': blobType }, // Key is handled by fetchGhanaNLP
+        headers: { 'Content-Type': blobType }, 
         body: audioBlob 
       });
       
-      // fetchGhanaNLP throws on non-ok or handles 403 internally for retry.
-      // If it resolves, it means the call was successful (possibly after a retry).
-      const resultText = await response.text(); // Assuming text response for ASR
+      const resultText = await response.text(); 
       setTranscribedText(resultText); toast({ title: "Transcription Successful" });
       if (user && user.uid && resultText) { 
-        try { 
-          const logResult = await logVoiceToText({ userId: user.uid, recognizedSpeech: resultText, detectedLanguage: selectedLanguage }); 
-          if (!logResult.success) {
-            console.warn('Failed to log VOT to history (server-side):', logResult.error);
-          }
-        } catch (logError: any) { 
-          console.error("Client-side error calling logVoiceToText flow:", logError);
-        } 
+        logVoiceToText({ userId: user.uid, recognizedSpeech: resultText, detectedLanguage: selectedLanguage })
+        .then(logResult => {
+            if (!logResult.success) {
+                console.warn('Failed to log VOT to history (server-side):', logResult.error);
+                toast({ title: 'History Logging Failed', description: `Could not save VOT to history: ${logResult.error || 'Unknown error'}`, variant: 'destructive'});
+            }
+        })
+        .catch (logError => {
+            console.error("Client-side error calling logVoiceToText flow:", logError);
+            toast({ title: 'History Logging Error', description: `Error trying to save VOT to history: ${logError.message || 'Unknown error'}`, variant: 'destructive'});
+        });
       }
     } catch (err: any) {
       console.error("Transcription error:", err);
