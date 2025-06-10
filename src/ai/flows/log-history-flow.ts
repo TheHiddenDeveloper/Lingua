@@ -71,7 +71,13 @@ const logTextTranslationFlow = ai.defineFlow(
     try {
       const { userId, ...data } = input;
       const path = `userHistories/${userId}/textTranslations`;
-      console.log(`[logTextTranslationFlow] Attempting to log to Firestore. ProjectID: ${adminDb.app.options.projectId}, Path: ${path}, Data:`, JSON.stringify(data));
+      const currentProjectId = adminDb?.projectId || 'unknown';
+      console.log(`[logTextTranslationFlow] Attempting to log to Firestore. ProjectID: ${currentProjectId}, Path: ${path}, Data:`, JSON.stringify(data));
+      
+      if (!adminDb) {
+        throw new Error('Firestore adminDb instance is not available.');
+      }
+
       const docRef = await adminDb
         .collection('userHistories')
         .doc(userId)
@@ -105,7 +111,13 @@ const logVoiceToTextFlow = ai.defineFlow(
     try {
       const { userId, ...data } = input;
       const path = `userHistories/${userId}/voiceToText`;
-      console.log(`[logVoiceToTextFlow] Attempting to log to Firestore. ProjectID: ${adminDb.app.options.projectId}, Path: ${path}, Data:`, JSON.stringify(data));
+      const currentProjectId = adminDb?.projectId || 'unknown';
+      console.log(`[logVoiceToTextFlow] Attempting to log to Firestore. ProjectID: ${currentProjectId}, Path: ${path}, Data:`, JSON.stringify(data));
+      
+      if (!adminDb) {
+        throw new Error('Firestore adminDb instance is not available.');
+      }
+
       const docRef = await adminDb
         .collection('userHistories')
         .doc(userId)
@@ -138,7 +150,13 @@ const logTextToSpeechFlow = ai.defineFlow(
     try {
       const { userId, ...data } = input;
       const path = `userHistories/${userId}/textToSpeech`;
-      console.log(`[logTextToSpeechFlow] Attempting to log to Firestore. ProjectID: ${adminDb.app.options.projectId}, Path: ${path}, Data:`, JSON.stringify(data));
+      const currentProjectId = adminDb?.projectId || 'unknown';
+      console.log(`[logTextToSpeechFlow] Attempting to log to Firestore. ProjectID: ${currentProjectId}, Path: ${path}, Data:`, JSON.stringify(data));
+
+      if (!adminDb) {
+        throw new Error('Firestore adminDb instance is not available.');
+      }
+      
       const docRef = await adminDb
         .collection('userHistories')
         .doc(userId)
@@ -171,7 +189,13 @@ const logTextSummaryFlow = ai.defineFlow(
     try {
       const { userId, ...data } = input;
       const path = `userHistories/${userId}/textSummaries`;
-      console.log(`[logTextSummaryFlow] Attempting to log to Firestore. ProjectID: ${adminDb.app.options.projectId}, Path: ${path}, Data:`, JSON.stringify(data));
+      const currentProjectId = adminDb?.projectId || 'unknown';
+      console.log(`[logTextSummaryFlow] Attempting to log to Firestore. ProjectID: ${currentProjectId}, Path: ${path}, Data:`, JSON.stringify(data));
+
+      if (!adminDb) {
+        throw new Error('Firestore adminDb instance is not available.');
+      }
+
       const docRef = await adminDb
         .collection('userHistories')
         .doc(userId)
