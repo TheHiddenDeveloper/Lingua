@@ -79,50 +79,95 @@ export default function TranslatePage() {
       return;
     }
 
-    const apiKeyBasic = getApiKeyBasic();
-    const apiKeyDev = getApiKeyDev();
-    if (!apiKeyBasic && !apiKeyDev) {
+    const apiKeyBasicExists = !!getApiKeyBasic();
+    const apiKeyDevExists = !!getApiKeyDev();
+    if (!apiKeyBasicExists && !apiKeyDevExists) {
       const msg = 'Translation API key is not configured.';
       toast({ title: 'API Key Missing', description: msg, variant: 'destructive' });
       setTranslationPageError(msg);
       return;
     }
+
     setIsLoadingTranslation(true);
     setSummary(null);
     setAiError(null);
     setTranslationPageError(null);
     setOutputText('');
-    const apiSourceLang = sourceLang === 'ga' ? 'gaa' : sourceLang; // GhanaNLP uses 'gaa' for Ga
-    const apiTargetLang = targetLang === 'ga' ? 'gaa' : targetLang;
-    const langPair = `${apiSourceLang}-${apiTargetLang}`;
+
+    const isLocalToLocal = sourceLang !== 'en' && targetLang !== 'en';
+
     try {
-      const response = await fetchGhanaNLP('https://translation-api.ghananlp.org/v1/translate', {
+      let textForFinalTranslation = inputText;
+      let sourceForFinalApiCall = sourceLang;
+
+      if (isLocalToLocal) {
+        // Step 1: Translate Source Local Language to English
+        const apiSourceLangToEn = sourceLang === 'ga' ? 'gaa' : sourceLang;
+        const langPairToEn = `${apiSourceLangToEn}-en`;
+        
+        toast({ title: 'Step 1: Translating to English', description: 'Translating your input to English first for local language conversion.'});
+
+        const responseToEn = await fetchGhanaNLP('https://translation-api.ghananlp.org/v1/translate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ in: inputText, lang: langPairToEn }),
+        });
+        const intermediateEnglishText = await responseToEn.text();
+
+        if (!intermediateEnglishText.trim()) {
+          throw new Error('Intermediate translation to English resulted in empty or whitespace text.');
+        }
+        textForFinalTranslation = intermediateEnglishText;
+        sourceForFinalApiCall = 'en'; // The source for the *second API call* is now English
+        toast({ title: 'Step 2: Translating to Target Language', description: 'Now translating from English to your target local language.'});
+      }
+
+      // Step 2 (or only step): Translate (original inputText or intermediateEnglishText) to Target Language
+      const apiSourceForFinalStep = sourceForFinalApiCall === 'ga' ? 'gaa' : sourceForFinalApiCall;
+      const apiTargetForFinalStep = targetLang === 'ga' ? 'gaa' : targetLang;
+      const finalLangPair = `${apiSourceForFinalStep}-${apiTargetForFinalStep}`;
+
+      const responseToTarget = await fetchGhanaNLP('https://translation-api.ghananlp.org/v1/translate', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }, // Key handled by fetchGhanaNLP
-        body: JSON.stringify({ in: inputText, lang: langPair }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ in: textForFinalTranslation, lang: finalLangPair }),
       });
-      // fetchGhanaNLP throws on non-ok or handles 403 for key swap retry
-      const translatedText = await response.text(); // Assuming text response for this endpoint
+      const translatedText = await responseToTarget.text();
+
+      if (!translatedText.trim() && isLocalToLocal) {
+        throw new Error('Final translation from English to target local language resulted in empty or whitespace text.');
+      } else if (!translatedText.trim() && !isLocalToLocal) {
+        throw new Error('Translation resulted in empty or whitespace text.');
+      }
+      
       setOutputText(translatedText);
       toast({ title: 'Translation Complete', description: 'Text translated successfully.' });
+
       if (user && user.uid) {
-        try {
-          const logResult = await logTextTranslation({ userId: user.uid, originalText: inputText, translatedText, sourceLanguage: sourceLang, targetLanguage: targetLang });
+        logTextTranslation({ 
+          userId: user.uid, 
+          originalText: inputText, 
+          translatedText, 
+          sourceLanguage: sourceLang, 
+          targetLanguage: targetLang 
+        }).then(logResult => {
           if (!logResult.success) {
             console.warn('Failed to log translation to history (server-side):', logResult.error);
           }
-        } catch (logError: any) { 
+        }).catch(logError => {
           console.error("Client-side error calling logTextTranslation flow:", logError);
-        }
+        });
       }
+
     } catch (error: any) {
       console.error("Translation API call error:", error);
       const errorMsg = error.message || 'An unexpected error occurred during translation.';
       setTranslationPageError(errorMsg);
       toast({ title: 'Translation Failed', description: errorMsg, variant: 'destructive' });
       setOutputText('');
+    } finally {
+      setIsLoadingTranslation(false);
     }
-    setIsLoadingTranslation(false);
   };
 
   const handleSummarize = async () => {
