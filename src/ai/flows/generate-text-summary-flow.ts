@@ -4,20 +4,20 @@
  * @fileOverview Genkit flow for generating concise summaries of long-form text.
  *
  * - generateTextSummary: Generates a summary for the given text and language.
- * - GenerateTextSummaryInputSchema: The input type for the generateTextSummary function.
- * - GenerateTextSummaryOutputSchema: The return type for the generateTextSummary function.
+ * - GenerateTextSummaryInput: The input type for the generateTextSummary function.
+ * - GenerateTextSummaryOutput: The return type for the generateTextSummary function.
  */
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
-export const GenerateTextSummaryInputSchema = z.object({
+const GenerateTextSummaryInputSchema = z.object({
   text: z.string().describe('The long-form text to be summarized.'),
   language: z.string().describe('The language of the input text (e.g., "English", "Twi").'),
 });
 export type GenerateTextSummaryInput = z.infer<typeof GenerateTextSummaryInputSchema>;
 
-export const GenerateTextSummaryOutputSchema = z.object({
+const GenerateTextSummaryOutputSchema = z.object({
   summary: z.string().describe('A concise summary of the input text.'),
 });
 export type GenerateTextSummaryOutput = z.infer<typeof GenerateTextSummaryOutputSchema>;
@@ -65,3 +65,4 @@ const generateTextSummaryFlow = ai.defineFlow(
     return output;
   }
 );
+
