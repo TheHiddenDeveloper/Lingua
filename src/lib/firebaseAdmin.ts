@@ -58,18 +58,18 @@ if (!getApps().length) {
 }
 
 if (!_app) {
-    // This state should ideally not be reached.
-    console.error("firebaseAdmin.ts: Firebase Admin App (_app) is null or undefined after initialization attempts.");
-    throw new Error("Firebase Admin App was not initialized. Cannot get Firestore/Auth instances.");
+  // This state should ideally not be reached.
+  console.error("firebaseAdmin.ts: Firebase Admin App (_app) is null or undefined after initialization attempts.");
+  throw new Error("Firebase Admin App was not initialized. Cannot get Firestore/Auth instances.");
 }
 
 try {
   _db = getFirestore(_app);
   console.log('firebaseAdmin.ts: Firestore instance obtained.');
-  if (_db && _db.projectId) {
-    console.log('firebaseAdmin.ts: Firestore Project ID from _db.projectId:', _db.projectId);
+  if (_db) {
+    console.log('firebaseAdmin.ts: Firestore instance is valid.');
   } else {
-    console.error('firebaseAdmin.ts: _db (Firestore instance) is null, undefined, or has no projectId property.');
+    console.error('firebaseAdmin.ts: _db (Firestore instance) is null or undefined.');
   }
 } catch (error: any) {
   console.error('firebaseAdmin.ts: Error getting Firestore instance:', error);
@@ -88,4 +88,3 @@ try {
 export const adminDb = _db;
 export const adminAuth = _authAdmin;
 export const adminTimestamp = FieldValue.serverTimestamp;
-    
