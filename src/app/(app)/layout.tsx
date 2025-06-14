@@ -1,26 +1,25 @@
 
 'use client';
 
-import { useEffect, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
+import { useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import AppHeader from '@/components/layout/AppHeader';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
-import {
-  SidebarProvider,
-  Sidebar,
-  SidebarHeader,
-  SidebarContent,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
-  SidebarInset,
-} from '@/components/ui/sidebar';
-import { Languages, Volume2, Mic, Settings, History, FileText, Globe, HelpCircle, Info } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Languages, Volume2, Mic, FileText } from 'lucide-react';
+
+const mainNavItems = [
+  { href: '/translate', label: 'Translator', icon: Languages },
+  { href: '/summary', label: 'Summarizer', icon: FileText },
+  { href: '/tts', label: 'Text-to-Speech', icon: Volume2 },
+  { href: '/vot', label: 'Voice-to-Text', icon: Mic },
+];
 
 export default function AppLayout({ children }: { children: ReactNode }) {
-  const { user, loading, logout } = useAuth();
+  const { user, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -39,131 +38,55 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   }
 
   if (!user) {
-    return null; // Or a more specific "not authenticated" page if preferred for UX
+    // This should ideally not be reached if the useEffect redirect works,
+    // but it's a fallback.
+    return (
+       <div className="flex min-h-screen items-center justify-center bg-background">
+         <p>Redirecting to login...</p>
+      </div>
+    );
   }
 
-  return (
-    <SidebarProvider defaultOpen={true}>
-      <div className="flex min-h-screen bg-background">
-        <Sidebar collapsible="icon" className="border-r fixed md:sticky top-0 h-screen z-50 md:z-30">
-          <SidebarHeader className="p-4">
-            <Link href="/translate" className="flex items-center gap-2 text-primary hover:opacity-80 transition-opacity">
-              <Globe className="h-7 w-7 md:h-6 md:w-6" />
-              <h2 className="font-headline text-lg font-semibold group-data-[collapsible=icon]:hidden">LinguaGhana</h2>
-            </Link>
-          </SidebarHeader>
-          <SidebarContent className="overflow-y-auto">
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  isActive={pathname === '/translate'}
-                  tooltip={{content: "Translator", side: "right", align: "center"}}
-                >
-                  <Link href="/translate">
-                    <Languages className="h-5 w-5" />
-                    <span className="group-data-[collapsible=icon]:hidden">Translator</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-               <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  isActive={pathname === '/summary'}
-                  tooltip={{content: "AI Summarizer", side: "right", align: "center"}}
-                >
-                  <Link href="/summary">
-                    <FileText className="h-5 w-5" />
-                    <span className="group-data-[collapsible=icon]:hidden">Summarizer</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  isActive={pathname === '/tts'}
-                  tooltip={{content: "Text-to-Speech", side: "right", align: "center"}}
-                >
-                  <Link href="/tts">
-                    <Volume2 className="h-5 w-5" />
-                    <span className="group-data-[collapsible=icon]:hidden">Text-to-Speech</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  isActive={pathname === '/vot'}
-                  tooltip={{content: "Voice-to-Text", side: "right", align: "center"}}
-                >
-                  <Link href="/vot">
-                    <Mic className="h-5 w-5" />
-                    <span className="group-data-[collapsible=icon]:hidden">Voice-to-Text</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  isActive={pathname === '/history'}
-                  tooltip={{content: "Activity History", side: "right", align: "center"}}
-                >
-                  <Link href="/history">
-                    <History className="h-5 w-5" />
-                    <span className="group-data-[collapsible=icon]:hidden">History</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  isActive={pathname === '/help'}
-                  tooltip={{content: "Help Center", side: "right", align: "center"}}
-                >
-                  <Link href="/help">
-                    <HelpCircle className="h-5 w-5" />
-                    <span className="group-data-[collapsible=icon]:hidden">Help</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  isActive={pathname === '/about'}
-                  tooltip={{content: "About LinguaGhana", side: "right", align: "center"}}
-                >
-                  <Link href="/about">
-                    <Info className="h-5 w-5" />
-                    <span className="group-data-[collapsible=icon]:hidden">About</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  isActive={pathname === '/settings'}
-                  tooltip={{content: "Settings", side: "right", align: "center"}}
-                >
-                  <Link href="/settings">
-                    <Settings className="h-5 w-5" />
-                    <span className="group-data-[collapsible=icon]:hidden">Settings</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarContent>
-        </Sidebar>
+  // Determine the active tab based on the current path
+  // Ensure that even nested paths like /history/details still highlight /history
+  const activeTabValue = mainNavItems.find(item => pathname.startsWith(item.href))?.href || (pathname.startsWith('/settings') || pathname.startsWith('/history') || pathname.startsWith('/help') || pathname.startsWith('/about') ? '' : '/translate');
 
-        <SidebarInset className="flex-1 flex flex-col ml-0 md:ml-[var(--sidebar-width-icon)] group-data-[state=expanded]/sidebar-wrapper:md:ml-[var(--sidebar-width)] transition-[margin-left] duration-200 ease-linear">
-          <AppHeader />
-          <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
-            {children}
-          </main>
-          <footer className="py-4 text-center text-xs sm:text-sm text-muted-foreground border-t">
-            © {new Date().getFullYear()} LinguaGhana. All rights reserved.
-          </footer>
-        </SidebarInset>
-      </div>
-    </SidebarProvider>
+
+  return (
+    <div className="flex min-h-screen flex-col bg-background">
+      <AppHeader />
+
+      {/* Desktop Tab Navigation for Main Sections */}
+      {/* Hide tabs if on settings, history, help, about pages to avoid confusion, as they are icon buttons in header */}
+      {!(pathname.startsWith('/settings') || pathname.startsWith('/history') || pathname.startsWith('/help') || pathname.startsWith('/about')) && (
+        <div className="hidden md:block border-b sticky top-16 z-30 bg-background/95 backdrop-blur-lg">
+          <Tabs value={activeTabValue} className="container mx-auto">
+            <TabsList className="grid w-full grid-cols-4 h-auto sm:h-12 bg-transparent p-0">
+              {mainNavItems.map((item) => (
+                <TabsTrigger
+                  key={item.href}
+                  value={item.href}
+                  asChild
+                  className="py-2.5 sm:py-3 data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none hover:bg-muted/50 transition-colors duration-150"
+                >
+                  <Link href={item.href} className="flex items-center justify-center gap-2 text-sm">
+                    <item.icon className="h-4 w-4 sm:h-5 sm:w-5" />
+                    {item.label}
+                  </Link>
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+        </div>
+      )}
+      
+      <main className="flex-1 container mx-auto p-4 sm:p-6 lg:p-8 overflow-y-auto mt-2">
+        {children}
+      </main>
+
+      <footer className="py-4 text-center text-xs sm:text-sm text-muted-foreground border-t">
+        © {new Date().getFullYear()} LinguaGhana. All rights reserved.
+      </footer>
+    </div>
   );
 }
