@@ -56,49 +56,49 @@ body {
   }
 
   .dark {
-    --background: 145 20% 10%; /* Very dark UMaT green */
-    --foreground: 145 25% 92%; /* Light off-white/greenish */
+    --background: 145 30% 8%; /* Dark UMaT Green (Deep Slate Green) */
+    --foreground: 145 15% 95%; /* Off-white with a hint of green */
 
-    --card: 145 20% 14%; /* Slightly lighter than background */
-    --card-foreground: 145 25% 92%;
+    --card: 145 30% 12%; /* Slightly lighter than background for depth */
+    --card-foreground: 145 15% 92%; /* Matching light text */
 
-    --popover: 145 20% 14%;
-    --popover-foreground: 145 25% 92%;
+    --popover: 145 30% 10%; /* Similar to card, slightly darker if needed */
+    --popover-foreground: 145 15% 95%;
 
-    --primary: 145 55% 48%; /* Brighter UMaT Green for dark mode */
-    --primary-foreground: 0 0% 100%; /* White text on primary */
+    --primary: 145 55% 50%; /* UMaT Green - vibrant for dark mode */
+    --primary-foreground: 0 0% 100%; /* White */
 
-    --secondary: 44 100% 60%; /* Brighter UMaT Yellow for dark mode */
-    --secondary-foreground: 145 50% 10%; /* Dark text on yellow */
+    --secondary: 44 90% 55%; /* UMaT Yellow - slightly less intense for balance */
+    --secondary-foreground: 145 40% 10%; /* Dark green text on yellow */
 
-    --muted: 145 20% 22%; /* Darker muted green */
-    --muted-foreground: 145 20% 65%; /* Lighter muted green for text */
+    --muted: 145 25% 20%; /* Darker, subtle green-gray */
+    --muted-foreground: 145 20% 65%; /* Lighter muted text */
 
-    --accent: 44 100% 60%; /* Brighter UMaT Yellow */
-    --accent-foreground: 145 50% 10%;
+    --accent: 44 95% 58%; /* UMaT Yellow - for accents, slightly brighter than secondary */
+    --accent-foreground: 145 40% 10%; /* Dark green text on accent */
 
-    --destructive: 0 70% 60%; /* Brighter UMaT Red */
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 0 70% 60%; /* UMaT Red - clear and visible */
+    --destructive-foreground: 0 0% 100%; /* White */
 
-    --border: 145 20% 30%; /* Dark green border */
-    --input: 145 20% 25%; /* Slightly lighter than muted for input bg */
-    --ring: 145 55% 58%; /* Brighter primary for ring */
+    --border: 145 25% 25%; /* Subtle border, darker than card */
+    --input: 145 25% 18%; /* Dark input background */
+    --ring: 145 55% 60%; /* Brighter primary for focus rings */
 
-    --chart-1: 145 55% 48%;
-    --chart-2: 44 100% 60%;
+    --chart-1: 145 55% 50%;
+    --chart-2: 44 90% 55%;
     --chart-3: 0 70% 60%;
-    --chart-4: 197 60% 70%;
-    --chart-5: 25 90% 65%;
+    --chart-4: 197 50% 65%;
+    --chart-5: 25 85% 60%;
     
     /* Sidebar colors for dark mode */
-    --sidebar-background: 145 20% 12%; /* Darker variant of background */
-    --sidebar-foreground: 145 25% 92%;
-    --sidebar-primary: 145 55% 48%;
+    --sidebar-background: 145 30% 10%; /* Slightly different from main bg for separation */
+    --sidebar-foreground: 145 15% 95%;
+    --sidebar-primary: 145 55% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 44 100% 60%;
-    --sidebar-accent-foreground: 145 50% 10%;
-    --sidebar-border: 145 20% 30%;
-    --sidebar-ring: 145 55% 58%;
+    --sidebar-accent: 44 95% 58%;
+    --sidebar-accent-foreground: 145 40% 10%;
+    --sidebar-border: 145 25% 22%;
+    --sidebar-ring: 145 55% 60%;
   }
 }
 
@@ -133,6 +133,6 @@ body {
     @apply transition-all duration-300 ease-in-out;
   }
   .card-animated:hover {
-    @apply shadow-lg;
+    @apply shadow-lg; /* Ensure shadow is defined in theme or default */
   }
 }

@@ -16,7 +16,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Label } from '@/components/ui/label';
-import { useGhanaNLP } from '@/contexts/GhanaNLPContext'; // Import useGhanaNLP
+import { useGhanaNLP } from '@/contexts/GhanaNLPContext';
 
 const supportedLanguages = [
   { code: 'en', name: 'English', localName: 'English' },
@@ -53,7 +53,7 @@ export default function TranslatePage() {
   const { user } = useAuth();
   const { isListening, transcript, startListening, stopListening, error: sttError, browserSupportsSpeechRecognition } = useSpeechRecognition();
   const { isSpeaking, speak, cancel: cancelSpeech, error: ttsError, browserSupportsTextToSpeech } = useTextToSpeech();
-  const { fetchGhanaNLP, getApiKeyBasic, getApiKeyDev } = useGhanaNLP(); // Use context
+  const { fetchGhanaNLP, getApiKeyBasic, getApiKeyDev } = useGhanaNLP();
 
   useEffect(() => {
     if (transcript) {
@@ -101,7 +101,6 @@ export default function TranslatePage() {
       let sourceForFinalApiCall = sourceLang;
 
       if (isLocalToLocal) {
-        // Step 1: Translate Source Local Language to English
         const apiSourceLangToEn = sourceLang === 'ga' ? 'gaa' : sourceLang;
         const langPairToEn = `${apiSourceLangToEn}-en`;
         
@@ -118,11 +117,10 @@ export default function TranslatePage() {
           throw new Error('Intermediate translation to English resulted in empty or whitespace text.');
         }
         textForFinalTranslation = intermediateEnglishText;
-        sourceForFinalApiCall = 'en'; // The source for the *second API call* is now English
+        sourceForFinalApiCall = 'en';
         toast({ title: 'Step 2: Translating to Target Language', description: 'Now translating from English to your target local language.'});
       }
 
-      // Step 2 (or only step): Translate (original inputText or intermediateEnglishText) to Target Language
       const apiSourceForFinalStep = sourceForFinalApiCall === 'ga' ? 'gaa' : sourceForFinalApiCall;
       const apiTargetForFinalStep = targetLang === 'ga' ? 'gaa' : targetLang;
       const finalLangPair = `${apiSourceForFinalStep}-${apiTargetForFinalStep}`;
@@ -183,10 +181,11 @@ export default function TranslatePage() {
     try {
       const targetLanguageName = supportedLanguages.find(l => l.code === targetLang)?.name || targetLang;
       const input: SummarizeTranslationInput = { translation: outputText, language: targetLanguageName };
-      const result: SummarizeTranslationOutput = await summarizeTranslation(input); // This uses Genkit, not GhanaNLP context
+      const result: SummarizeTranslationOutput = await summarizeTranslation(input);
       setSummary(result.summary);
       toast({ title: 'Summary Generated', description: 'Translation summary created successfully.' });
-    } catch (error: any) {
+    } catch (error: any)
+      {
       console.error("Summarization error:", error);
       let displayMessage = error.message || 'Failed to generate summary.';
       if (error.message && error.message.includes('503') && (error.message.includes('overloaded') || error.message.includes('Service Unavailable'))) {
@@ -223,8 +222,8 @@ export default function TranslatePage() {
   return (
     <div className="container mx-auto p-4 md:p-6 flex flex-col gap-4 md:gap-6">
       <div className="text-center mb-4 md:mb-6">
-        <h1 className="font-headline text-3xl md:text-4xl font-bold">LinguaGhana Translator</h1>
-        <p className="text-muted-foreground mt-1 md:mt-2">Translate between English and Ghanaian languages.</p>
+        <h1 className="font-headline text-2xl sm:text-3xl md:text-4xl font-bold">LinguaGhana Translator</h1>
+        <p className="text-muted-foreground mt-1 md:mt-2 text-sm sm:text-base">Translate between English and Ghanaian languages.</p>
       </div>
       {translationPageError && (
         <Alert variant="destructive" className="my-4">
@@ -236,29 +235,35 @@ export default function TranslatePage() {
 
       {/* Language Selectors */}
       <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 mb-4">
-        <Select value={sourceLang} onValueChange={setSourceLang}>
-          <SelectTrigger className="w-full sm:w-[200px]">
-            <SelectValue placeholder="Translate from" />
-          </SelectTrigger>
-          <SelectContent>
-            {supportedLanguages.map(lang => (<SelectItem key={`src-${lang.code}`} value={lang.code}>{lang.name}</SelectItem>))}
-          </SelectContent>
-        </Select>
+        <div className="w-full sm:w-auto">
+          <Label htmlFor="source-lang-select" className="sr-only">Translate from</Label>
+          <Select value={sourceLang} onValueChange={setSourceLang}>
+            <SelectTrigger id="source-lang-select" className="w-full sm:w-[200px]">
+              <SelectValue placeholder="Translate from" />
+            </SelectTrigger>
+            <SelectContent>
+              {supportedLanguages.map(lang => (<SelectItem key={`src-${lang.code}`} value={lang.code}>{lang.name}</SelectItem>))}
+            </SelectContent>
+          </Select>
+        </div>
         <Button onClick={handleSwapLanguages} variant="ghost" size="icon" className="btn-animated my-1 sm:my-0" aria-label="Swap languages">
           <ArrowRightLeft className="h-5 w-5 text-primary" />
         </Button>
-        <Select value={targetLang} onValueChange={setTargetLang}>
-          <SelectTrigger className="w-full sm:w-[200px]">
-            <SelectValue placeholder="Translate to" />
-          </SelectTrigger>
-          <SelectContent>
-            {supportedLanguages.map(lang => (<SelectItem key={`tgt-${lang.code}`} value={lang.code}>{lang.name}</SelectItem>))}
-          </SelectContent>
-        </Select>
+        <div className="w-full sm:w-auto">
+           <Label htmlFor="target-lang-select" className="sr-only">Translate to</Label>
+          <Select value={targetLang} onValueChange={setTargetLang}>
+            <SelectTrigger id="target-lang-select" className="w-full sm:w-[200px]">
+              <SelectValue placeholder="Translate to" />
+            </SelectTrigger>
+            <SelectContent>
+              {supportedLanguages.map(lang => (<SelectItem key={`tgt-${lang.code}`} value={lang.code}>{lang.name}</SelectItem>))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* Input and Output Text Areas */}
-      <div className="flex flex-col md:flex-row gap-4 md:gap-6 items-start">
+      <div className="flex flex-col lg:flex-row gap-4 md:gap-6 items-start">
         <Card className="w-full card-animated flex-1">
           <CardHeader className="pb-2 pt-4 px-4 sm:px-6">
             <CardTitle className="text-base sm:text-lg font-medium">
@@ -270,7 +275,7 @@ export default function TranslatePage() {
               placeholder="Enter text to translate (max 1000 chars)..."
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
-              className="min-h-[150px] sm:min-h-[200px] text-base"
+              className="min-h-[150px] sm:min-h-[200px] text-base resize-none"
               aria-label="Input text for translation"
               maxLength={1000}
             />
@@ -286,7 +291,7 @@ export default function TranslatePage() {
           </CardContent>
         </Card>
 
-        <Card className="w-full card-animated flex-1 mt-4 md:mt-0">
+        <Card className="w-full card-animated flex-1 mt-4 lg:mt-0">
           <CardHeader className="pb-2 pt-4 px-4 sm:px-6">
             <CardTitle className="text-base sm:text-lg font-medium">
               {supportedLanguages.find(l => l.code === targetLang)?.name || 'Translation'}
@@ -297,7 +302,7 @@ export default function TranslatePage() {
               placeholder="Translation will appear here..."
               value={outputText}
               readOnly
-              className="min-h-[150px] sm:min-h-[200px] bg-muted/30 text-base"
+              className="min-h-[150px] sm:min-h-[200px] bg-muted/30 text-base resize-none"
               aria-label="Translated text output"
             />
              <div className="flex justify-between items-center mt-1">

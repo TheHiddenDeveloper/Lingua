@@ -39,20 +39,20 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   }
 
   if (!user) {
-    return null;
+    return null; // Or a more specific "not authenticated" page if preferred for UX
   }
 
   return (
     <SidebarProvider defaultOpen={true}>
       <div className="flex min-h-screen bg-background">
-        <Sidebar collapsible="icon" className="border-r">
+        <Sidebar collapsible="icon" className="border-r fixed md:sticky top-0 h-screen z-50 md:z-30">
           <SidebarHeader className="p-4">
-            <Link href="/translate" className="flex items-center gap-2">
-              <Globe className="h-7 w-7 text-primary md:h-6 md:w-6" />
-              <h2 className="font-headline text-lg font-semibold text-primary group-data-[collapsible=icon]:hidden">LinguaGhana</h2>
+            <Link href="/translate" className="flex items-center gap-2 text-primary hover:opacity-80 transition-opacity">
+              <Globe className="h-7 w-7 md:h-6 md:w-6" />
+              <h2 className="font-headline text-lg font-semibold group-data-[collapsible=icon]:hidden">LinguaGhana</h2>
             </Link>
           </SidebarHeader>
-          <SidebarContent>
+          <SidebarContent className="overflow-y-auto">
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton
@@ -154,12 +154,12 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           </SidebarContent>
         </Sidebar>
 
-        <SidebarInset className="flex-1 flex flex-col">
+        <SidebarInset className="flex-1 flex flex-col ml-0 md:ml-[var(--sidebar-width-icon)] group-data-[state=expanded]/sidebar-wrapper:md:ml-[var(--sidebar-width)] transition-[margin-left] duration-200 ease-linear">
           <AppHeader />
-          <main className="flex-1 p-4 md:p-6 overflow-auto">
+          <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
             {children}
           </main>
-          <footer className="py-4 text-center text-sm text-muted-foreground border-t">
+          <footer className="py-4 text-center text-xs sm:text-sm text-muted-foreground border-t">
             © {new Date().getFullYear()} LinguaGhana. All rights reserved.
           </footer>
         </SidebarInset>
@@ -167,5 +167,3 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     </SidebarProvider>
   );
 }
-
-    

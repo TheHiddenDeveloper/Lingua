@@ -112,10 +112,10 @@ export default function SummaryPage() {
   };
 
   return (
-    <div className="container mx-auto p-4 md:p-8 flex flex-col gap-6">
-      <div className="text-center">
-        <h1 className="font-headline text-3xl md:text-4xl font-bold">AI Text Summarizer</h1>
-        <p className="text-muted-foreground mt-1 md:mt-2">Get concise summaries of your long-form text content.</p>
+    <div className="container mx-auto p-4 md:p-6 flex flex-col gap-4 md:gap-6">
+      <div className="text-center mb-4 md:mb-6">
+        <h1 className="font-headline text-2xl sm:text-3xl md:text-4xl font-bold">AI Text Summarizer</h1>
+        <p className="text-muted-foreground mt-1 md:mt-2 text-sm sm:text-base">Get concise summaries of your long-form text content.</p>
       </div>
 
       {error && (
@@ -128,8 +128,8 @@ export default function SummaryPage() {
 
       <Card className="card-animated w-full">
         <CardHeader className="px-4 sm:px-6 pt-4 pb-2">
-          <CardTitle>Summarize Your Text</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-lg sm:text-xl">Summarize Your Text</CardTitle>
+          <CardDescription className="text-xs sm:text-sm">
             Enter your text, select its language, and click &quot;Summarize&quot;. Max {MAX_INPUT_LENGTH} characters.
           </CardDescription>
         </CardHeader>
@@ -141,7 +141,7 @@ export default function SummaryPage() {
               placeholder="Paste your article, essay, or transcript here..."
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
-              className="min-h-[150px] sm:min-h-[200px] text-base"
+              className="min-h-[150px] sm:min-h-[200px] text-base resize-none"
               aria-label="Input text for summarization"
               maxLength={MAX_INPUT_LENGTH}
             />
@@ -150,11 +150,11 @@ export default function SummaryPage() {
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4 items-center sm:items-end">
+          <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-end">
             <div className="w-full sm:w-auto flex-grow sm:flex-grow-0">
-                <Label htmlFor="language-select">Language of Input Text:</Label>
+                <Label htmlFor="language-select" className="block mb-1 text-sm font-medium">Language of Input Text:</Label>
                 <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
-                <SelectTrigger id="language-select" className="w-full sm:w-[200px] mt-1">
+                <SelectTrigger id="language-select" className="w-full sm:w-[200px]">
                     <SelectValue placeholder="Select language" />
                 </SelectTrigger>
                 <SelectContent>
@@ -164,7 +164,7 @@ export default function SummaryPage() {
                 </SelectContent>
                 </Select>
             </div>
-            <Button onClick={handleSummarize} disabled={isLoading || !inputText.trim()} size="lg" className="w-full sm:w-auto btn-animated mt-2 sm:mt-0">
+            <Button onClick={handleSummarize} disabled={isLoading || !inputText.trim()} size="lg" className="w-full sm:w-auto btn-animated mt-2 sm:mt-0 flex-shrink-0">
                 {isLoading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <FileText className="mr-2 h-5 w-5" />}
                 Summarize Text
             </Button>
@@ -173,15 +173,15 @@ export default function SummaryPage() {
       </Card>
 
       {summary && (
-        <Card className="mt-6 card-animated">
+        <Card className="mt-4 md:mt-6 card-animated">
           <CardHeader className="px-4 sm:px-6 pt-4 pb-2">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-              <CardTitle className="font-headline text-xl">Generated Summary</CardTitle>
-              <div className="flex gap-2 self-end sm:self-auto">
+              <CardTitle className="font-headline text-lg sm:text-xl">Generated Summary</CardTitle>
+              <div className="flex gap-2 self-start sm:self-auto mt-2 sm:mt-0">
                 <Button variant="outline" size="icon" onClick={handleCopySummary} aria-label="Copy summary">
                   <Copy className="h-4 w-4" />
                 </Button>
-                {navigator.share && (
+                {typeof navigator !== 'undefined' && navigator.share && (
                   <Button variant="outline" size="icon" onClick={handleShareSummary} aria-label="Share summary">
                     <Share2 className="h-4 w-4" />
                   </Button>
@@ -197,12 +197,12 @@ export default function SummaryPage() {
         </Card>
       )}
        {!isLoading && !summary && !error && inputText.length > 0 && (
-         <Card className="mt-6 card-animated">
+         <Card className="mt-4 md:mt-6 card-animated">
           <CardHeader className="px-4 sm:px-6 pt-4 pb-2">
-             <CardTitle className="font-headline text-xl">Generated Summary</CardTitle>
+             <CardTitle className="font-headline text-lg sm:text-xl">Generated Summary</CardTitle>
           </CardHeader>
           <CardContent className="px-4 sm:px-6 pb-4">
-            <p className="text-muted-foreground">Click &quot;Summarize Text&quot; to generate a summary.</p>
+            <p className="text-muted-foreground text-sm">Click &quot;Summarize Text&quot; to generate a summary.</p>
           </CardContent>
         </Card>
       )}

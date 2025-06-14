@@ -4,10 +4,9 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Info, Users, Heart, BookOpen, Code, Layers, GitBranch, Award, Building, Mail } from 'lucide-react';
+import { Info, Users, Heart, BookOpen, Code, GitBranch, Award, Building, Mail } from 'lucide-react';
 import Link from 'next/link';
 
-// Placeholder for version - in a real app, this might come from package.json or build process
 const APP_VERSION = '1.0.0';
 
 const teamMembers = [
@@ -33,80 +32,68 @@ const techCredits = [
   { name: 'Lucide React', description: 'For clear and beautiful icons.' },
 ];
 
-// Placeholder for multilingual content.
-// In a real app, you'd use an i18n library.
-// const t = useTranslations('AboutPage');
 
 export default function AboutPage() {
   return (
-    <div className="container mx-auto p-4 md:p-8 flex flex-col gap-6 md:gap-8">
-      <div className="text-center md:text-left">
-        <h1 className="font-headline text-3xl md:text-4xl font-bold flex items-center justify-center md:justify-start">
-          <Info className="w-8 h-8 mr-3 text-primary" />
+    <div className="container mx-auto p-4 md:p-6 flex flex-col gap-4 md:gap-6">
+      <div className="text-center md:text-left mb-4 md:mb-6">
+        <h1 className="font-headline text-2xl sm:text-3xl md:text-4xl font-bold flex items-center justify-center md:justify-start">
+          <Info className="w-7 h-7 sm:w-8 sm:h-8 mr-2 sm:mr-3 text-primary" />
           About LinguaGhana
-          {/* Example: {t('title')} */}
         </h1>
-        <p className="text-muted-foreground mt-1 md:mt-2">
+        <p className="text-muted-foreground mt-1 md:mt-2 text-sm sm:text-base">
           Breaking language barriers and fostering understanding across Ghana.
-          {/* Example: {t('subtitle')} */}
         </p>
       </div>
 
       <Card id="mission" className="card-animated">
         <CardHeader className="px-4 sm:px-6 pt-4 pb-2">
-          <CardTitle className="flex items-center text-xl md:text-2xl">
-            <Heart className="w-6 h-6 mr-3 text-primary" />
+          <CardTitle className="flex items-center text-lg sm:text-xl md:text-2xl">
+            <Heart className="w-5 h-5 sm:w-6 sm:h-6 mr-2 sm:mr-3 text-primary" />
             Our Mission
-            {/* Example: {t('mission.title')} */}
           </CardTitle>
         </CardHeader>
         <CardContent className="px-4 sm:px-6 pb-4 text-sm md:text-base text-muted-foreground space-y-2">
           <p className="text-justify">
             LinguaGhana is dedicated to bridging communication gaps within Ghana by providing accessible and reliable translation tools. 
             We aim to support seamless translation between English and key Ghanaian languages including Twi, Ga, Dagbani, and Ewe.
-            {/* Example: {t('mission.paragraph1')} */}
           </p>
           <p className="text-justify">
             Our goal is to empower individuals, promote cultural exchange, and make information more accessible to all, regardless of linguistic background.
-            {/* Example: {t('mission.paragraph2')} */}
           </p>
         </CardContent>
       </Card>
 
       <Card id="story" className="card-animated">
         <CardHeader className="px-4 sm:px-6 pt-4 pb-2">
-          <CardTitle className="flex items-center text-xl md:text-2xl">
-            <BookOpen className="w-6 h-6 mr-3 text-primary" />
+          <CardTitle className="flex items-center text-lg sm:text-xl md:text-2xl">
+            <BookOpen className="w-5 h-5 sm:w-6 sm:h-6 mr-2 sm:mr-3 text-primary" />
             Project Story
-            {/* Example: {t('story.title')} */}
           </CardTitle>
         </CardHeader>
         <CardContent className="px-4 sm:px-6 pb-4 text-sm md:text-base text-muted-foreground space-y-2">
           <p className="text-justify">
             LinguaGhana was born as a final year undergraduate project at the prestigious University of Mines and Technology (UMaT), Tarkwa. 
             The project was driven by a passion for technology and a deep appreciation for Ghana&apos;s rich linguistic diversity.
-            {/* Example: {t('story.paragraph1')} */}
           </p>
           <p className="text-justify">
             We recognized the cultural significance of local languages and the need for tools that make inter-language communication easier. 
             This app represents our commitment to leveraging technology for positive social impact and celebrating Ghanaian heritage.
-            {/* Example: {t('story.paragraph2')} */}
           </p>
         </CardContent>
       </Card>
 
       <Card id="team" className="card-animated">
         <CardHeader className="px-4 sm:px-6 pt-4 pb-2">
-          <CardTitle className="flex items-center text-xl md:text-2xl">
-            <Users className="w-6 h-6 mr-3 text-primary" />
+          <CardTitle className="flex items-center text-lg sm:text-xl md:text-2xl">
+            <Users className="w-5 h-5 sm:w-6 sm:h-6 mr-2 sm:mr-3 text-primary" />
             The Team
-            {/* Example: {t('team.title')} */}
           </CardTitle>
         </CardHeader>
-        <CardContent className="px-4 sm:px-6 pb-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+        <CardContent className="px-4 sm:px-6 pb-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {teamMembers.map((member) => (
             <div key={member.name} className="flex flex-col items-center text-center p-3 rounded-lg border bg-card/50 hover:shadow-md transition-shadow">
-              <Avatar className="w-20 h-20 mb-3 border-2 border-primary">
+              <Avatar className="w-16 h-16 sm:w-20 sm:h-20 mb-3 border-2 border-primary">
                 <AvatarImage src={`https://placehold.co/100x100.png?text=${member.initials}`} alt={member.name} data-ai-hint={member.avatarHint} />
                 <AvatarFallback>{member.initials}</AvatarFallback>
               </Avatar>
@@ -119,10 +106,9 @@ export default function AboutPage() {
 
       <Card id="acknowledgements" className="card-animated">
         <CardHeader className="px-4 sm:px-6 pt-4 pb-2">
-          <CardTitle className="flex items-center text-xl md:text-2xl">
-            <Award className="w-6 h-6 mr-3 text-primary" />
+          <CardTitle className="flex items-center text-lg sm:text-xl md:text-2xl">
+            <Award className="w-5 h-5 sm:w-6 sm:h-6 mr-2 sm:mr-3 text-primary" />
             Acknowledgements
-            {/* Example: {t('acknowledgements.title')} */}
           </CardTitle>
         </CardHeader>
         <CardContent className="px-4 sm:px-6 pb-4 space-y-3">
@@ -140,20 +126,17 @@ export default function AboutPage() {
       
       <Card id="tech" className="card-animated">
         <CardHeader className="px-4 sm:px-6 pt-4 pb-2">
-          <CardTitle className="flex items-center text-xl md:text-2xl">
-            <Code className="w-6 h-6 mr-3 text-primary" />
+          <CardTitle className="flex items-center text-lg sm:text-xl md:text-2xl">
+            <Code className="w-5 h-5 sm:w-6 sm:h-6 mr-2 sm:mr-3 text-primary" />
             Technology & Credits
-            {/* Example: {t('tech.title')} */}
           </CardTitle>
         </CardHeader>
         <CardContent className="px-4 sm:px-6 pb-4 text-sm text-muted-foreground">
           <p className="mb-3 text-justify">LinguaGhana is built with modern technologies and relies on several fantastic tools and services:</p>
-          {/* Example: {t('tech.intro')} */}
-          <ul className="list-disc list-inside space-y-1.5">
+          <ul className="list-disc list-inside space-y-1.5 pl-2">
             {techCredits.map((tech) => (
               <li key={tech.name}>
                 <span className="font-medium text-foreground">{tech.name}:</span> {tech.description}
-                {/* Example: <span className="font-medium text-foreground">{t(`tech.${tech.name}.name`)}:</span> {t(`tech.${tech.name}.description`)} */}
               </li>
             ))}
           </ul>
@@ -162,26 +145,23 @@ export default function AboutPage() {
 
        <Card id="version" className="card-animated">
         <CardHeader className="px-4 sm:px-6 pt-4 pb-2">
-          <CardTitle className="flex items-center text-xl md:text-2xl">
-            <GitBranch className="w-6 h-6 mr-3 text-primary" />
+          <CardTitle className="flex items-center text-lg sm:text-xl md:text-2xl">
+            <GitBranch className="w-5 h-5 sm:w-6 sm:h-6 mr-2 sm:mr-3 text-primary" />
             Version Information
-            {/* Example: {t('version.title')} */}
           </CardTitle>
         </CardHeader>
         <CardContent className="px-4 sm:px-6 pb-4 text-sm md:text-base text-muted-foreground">
           <p>LinguaGhana Version: {APP_VERSION}</p>
-          {/* Example: <p>{t('version.currentVersion', { version: APP_VERSION })}</p> */}
           <p className="mt-1 text-justify">
             We are continuously working to improve LinguaGhana. For the latest updates, please check our project repository or announcements.
-            {/* Example: {t('version.updates')} */}
           </p>
         </CardContent>
       </Card>
 
       <Card id="contact" className="card-animated">
         <CardHeader className="px-4 sm:px-6 pt-4 pb-2">
-          <CardTitle className="flex items-center text-xl md:text-2xl">
-            <Mail className="w-6 h-6 mr-3 text-primary" />
+          <CardTitle className="flex items-center text-lg sm:text-xl md:text-2xl">
+            <Mail className="w-5 h-5 sm:w-6 sm:h-6 mr-2 sm:mr-3 text-primary" />
             Contact & Feedback
           </CardTitle>
         </CardHeader>
@@ -194,19 +174,8 @@ export default function AboutPage() {
               <Mail className="mr-2 h-4 w-4" /> Email Us
             </Link>
           </Button>
-           {/* A note about future dynamic content for multilingual support.
-             * For a production app with extensive multilingual help/about content,
-             * fetching this content from Firestore or a CMS would be beneficial
-             * to allow updates without redeploying the app. Example structure:
-             * /appContent/{locale}/aboutPage/(document with fields for each section)
-             * /appContent/{locale}/helpPage/(document with fields for each FAQ)
-          */}
         </CardContent>
       </Card>
     </div>
   );
 }
-
-    
-
-    

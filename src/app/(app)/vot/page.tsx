@@ -13,15 +13,14 @@ import { logVoiceToText } from '@/ai/flows/log-history-flow';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Label } from '@/components/ui/label';
-import { useGhanaNLP } from '@/contexts/GhanaNLPContext'; // Import useGhanaNLP
+import { useGhanaNLP } from '@/contexts/GhanaNLPContext'; 
 
 const supportedApiLanguages = [
   { code: 'tw', name: 'Twi' },
-  // Add other languages if GhanaNLP ASR API supports them directly with these codes
 ];
 
 export default function VoiceToTextGhanaNLPPage() {
-  const [selectedLanguage, setSelectedLanguage] = useState('tw'); // Default to Twi
+  const [selectedLanguage, setSelectedLanguage] = useState('tw'); 
   const [isRecording, setIsRecording] = useState(false);
   const [transcribedText, setTranscribedText] = useState('');
   const [isLoadingTranscription, setIsLoadingTranscription] = useState(false);
@@ -32,12 +31,12 @@ export default function VoiceToTextGhanaNLPPage() {
   const audioStreamRef = useRef<MediaStream | null>(null);
   const { toast } = useToast();
   const { user } = useAuth();
-  const { fetchGhanaNLP, getApiKeyBasic, getApiKeyDev } = useGhanaNLP(); // Use context
+  const { fetchGhanaNLP, getApiKeyBasic, getApiKeyDev } = useGhanaNLP(); 
 
   const getSupportedMimeType = () => {
     const types = ['audio/webm;codecs=opus', 'audio/ogg;codecs=opus', 'audio/webm', 'audio/ogg', 'audio/wav'];
     for (const type of types) { if (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported(type)) return type; }
-    return 'audio/webm'; // Default if specific checks fail but MediaRecorder exists
+    return 'audio/webm'; 
   };
   
   const mimeType = getSupportedMimeType();
@@ -87,7 +86,7 @@ export default function VoiceToTextGhanaNLPPage() {
         await transcribeAudio(audioBlob, recordedMimeTypeFinal);
       };
       mediaRecorderRef.current.onerror = (event: Event) => {
-        const mediaRecorderError = event as any; // Cast to access potential 'error' property
+        const mediaRecorderError = event as any; 
         console.error("MediaRecorder error:", mediaRecorderError.error || mediaRecorderError);
         setPageError(`MediaRecorder error: ${mediaRecorderError.error?.name || 'Unknown recording error.'}`);
         toast({ title: "Recording Error", description: `Error during recording: ${mediaRecorderError.error?.name || 'Try again.'}`, variant: "destructive" });
@@ -158,21 +157,21 @@ export default function VoiceToTextGhanaNLPPage() {
   const handleToggleRecording = () => { if (isRecording) stopRecordingProcess(); else startRecordingProcess(); };
 
   return (
-    <div className="container mx-auto p-4 md:p-8 flex flex-col gap-6">
-      <div className="text-center">
-        <h1 className="font-headline text-3xl md:text-4xl font-bold">Voice-to-Text</h1>
-        <p className="text-muted-foreground mt-1 md:mt-2">Record and transcribe Twi audio using GhanaNLP.</p>
+    <div className="container mx-auto p-4 md:p-6 flex flex-col gap-4 md:gap-6">
+      <div className="text-center mb-4 md:mb-6">
+        <h1 className="font-headline text-2xl sm:text-3xl md:text-4xl font-bold">Voice-to-Text</h1>
+        <p className="text-muted-foreground mt-1 md:mt-2 text-sm sm:text-base">Record and transcribe Twi audio using GhanaNLP.</p>
       </div>
       {pageError && (<Alert variant="destructive" className="my-4 px-4 sm:px-6 py-3"><AlertTriangle className="h-4 w-4" /><AlertTitle>Error</AlertTitle><AlertDescription>{pageError}</AlertDescription></Alert>)}
       <Card className="card-animated w-full max-w-2xl mx-auto">
         <CardHeader className="px-4 sm:px-6 pt-4 pb-2">
-          <CardTitle>Transcribe Audio</CardTitle>
-          <CardDescription>Select language, then {isRecording ? "Stop" : "Start"} Recording.</CardDescription>
+          <CardTitle className="text-lg sm:text-xl">Transcribe Audio</CardTitle>
+          <CardDescription className="text-xs sm:text-sm">Select language, then {isRecording ? "Stop" : "Start"} Recording.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4 px-4 sm:px-6 pb-4">
           <div className="flex flex-col sm:flex-row gap-4 items-center">
             <div className="w-full sm:w-auto">
-                <Label htmlFor="language-select-vot" className="sr-only">Language</Label>
+                <Label htmlFor="language-select-vot" className="block mb-1 text-sm font-medium">Language</Label>
                 <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
                     <SelectTrigger id="language-select-vot" className="w-full sm:w-[180px]"> <SelectValue placeholder="Select language" /> </SelectTrigger>
                     <SelectContent> {supportedApiLanguages.map(lang => (<SelectItem key={lang.code} value={lang.code}>{lang.name}</SelectItem>))} </SelectContent>

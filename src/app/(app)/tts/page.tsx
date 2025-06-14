@@ -13,7 +13,7 @@ import { logTextToSpeech } from '@/ai/flows/log-history-flow';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { Label } from '@/components/ui/label';
-import { useGhanaNLP } from '@/contexts/GhanaNLPContext'; // Import useGhanaNLP
+import { useGhanaNLP } from '@/contexts/GhanaNLPContext';
 
 export default function TextToSpeechPage() {
   const [textToSpeak, setTextToSpeak] = useState('');
@@ -129,26 +129,26 @@ export default function TextToSpeechPage() {
   const handleSpeakerChange = (newSpeakerId: string) => { setSelectedSpeakerId(newSpeakerId); if (audioSrc) URL.revokeObjectURL(audioSrc); setAudioSrc(null); }
 
   if (isLoadingContextData) {
-    return <div className="flex justify-center items-center h-screen"><LoadingSpinner size="lg" /> <p className="ml-2">Loading TTS options...</p></div>;
+    return <div className="flex justify-center items-center h-[calc(100vh-10rem)]"><LoadingSpinner size="lg" /> <p className="ml-2">Loading TTS options...</p></div>;
   }
 
   return (
-    <div className="container mx-auto p-4 md:p-8 flex flex-col gap-6">
-      <div className="text-center">
-        <h1 className="font-headline text-3xl md:text-4xl font-bold">Text-to-Speech</h1>
-        <p className="text-muted-foreground mt-1 md:mt-2">Convert text into Twi or Ewe speech.</p>
+    <div className="container mx-auto p-4 md:p-6 flex flex-col gap-4 md:gap-6">
+      <div className="text-center mb-4 md:mb-6">
+        <h1 className="font-headline text-2xl sm:text-3xl md:text-4xl font-bold">Text-to-Speech</h1>
+        <p className="text-muted-foreground mt-1 md:mt-2 text-sm sm:text-base">Convert text into Twi or Ewe speech.</p>
       </div>
-      {pageError && (<Alert variant="destructive" className="px-4 sm:px-6 py-3"><AlertTriangle className="h-4 w-4" /><AlertTitle>Error</AlertTitle><AlertDescription>{pageError}</AlertDescription></Alert>)}
+      {pageError && (<Alert variant="destructive" className="my-4 px-4 sm:px-6 py-3"><AlertTriangle className="h-4 w-4" /><AlertTitle>Error</AlertTitle><AlertDescription>{pageError}</AlertDescription></Alert>)}
       <Card className="card-animated w-full max-w-2xl mx-auto">
         <CardHeader className="px-4 sm:px-6 pt-4 pb-2">
-          <CardTitle>Synthesize Speech</CardTitle>
-          <CardDescription>Enter text, select language & speaker, then synthesize.</CardDescription>
+          <CardTitle className="text-lg sm:text-xl">Synthesize Speech</CardTitle>
+          <CardDescription className="text-xs sm:text-sm">Enter text, select language & speaker, then synthesize.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4 px-4 sm:px-6 pb-4">
-          <Textarea placeholder="Enter text to speak..." value={textToSpeak} onChange={(e) => setTextToSpeak(e.target.value)} className="min-h-[100px] sm:min-h-[150px] text-base" aria-label="Text to speak" />
+          <Textarea placeholder="Enter text to speak..." value={textToSpeak} onChange={(e) => setTextToSpeak(e.target.value)} className="min-h-[100px] sm:min-h-[150px] text-base resize-none" aria-label="Text to speak" />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="language-select-tts">Language</Label>
+              <Label htmlFor="language-select-tts" className="block mb-1 text-sm font-medium">Language</Label>
               {(isLoadingContextData && availableLanguages.length === 0) ? <LoadingSpinner size="sm" className="mt-2"/> : (
                 <Select value={selectedLanguageCode} onValueChange={handleLanguageChange} disabled={availableLanguages.length === 0}>
                   <SelectTrigger id="language-select-tts" className="w-full mt-1"><SelectValue placeholder="Select language" /></SelectTrigger>
@@ -160,7 +160,7 @@ export default function TextToSpeechPage() {
               )}
             </div>
             <div>
-              <Label htmlFor="speaker-select-tts">Speaker</Label>
+              <Label htmlFor="speaker-select-tts" className="block mb-1 text-sm font-medium">Speaker</Label>
               {(isLoadingContextData && filteredSpeakers.length === 0 && !allSpeakers) ? <LoadingSpinner size="sm" className="mt-2"/> : (
                 <Select value={selectedSpeakerId} onValueChange={handleSpeakerChange} disabled={filteredSpeakers.length === 0 || !selectedLanguageCode}>
                   <SelectTrigger id="speaker-select-tts" className="w-full mt-1"><SelectValue placeholder="Select speaker" /></SelectTrigger>
@@ -179,7 +179,7 @@ export default function TextToSpeechPage() {
           </Button>
           {audioSrc && (
             <div className="mt-4">
-              <Label>Generated Audio:</Label>
+              <Label className="block mb-1 text-sm font-medium">Generated Audio:</Label>
               <audio key={audioSrc} controls src={audioSrc} className="w-full mt-1" aria-label="Synthesized audio player">Your browser does not support the audio element.</audio>
             </div>
           )}

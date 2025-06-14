@@ -8,30 +8,20 @@ import { Languages, Mic, Volume2, History, FileText, Mail, HelpCircle } from 'lu
 import Link from 'next/link';
 
 export default function HelpPage() {
-  // Placeholder for multilingual content.
-  // In a real app, you'd use an i18n library (e.g., next-intl, react-i18next)
-  // and fetch translations for the current locale.
-  // For example: const t = useTranslations('HelpPage');
-
   const helpContent = {
     title: 'LinguaGhana Help Center',
     description: 'Find answers to common questions and learn how to use LinguaGhana effectively.',
-    contactEmail: 'support@linguaghana.app', // Replace with your actual support email
+    contactEmail: 'support@linguaghana.app', 
 
     sections: [
       {
         id: 'translation',
         icon: Languages,
         title: 'Text Translation',
-        // title_tw: 'Kasa Nkyerɛaseɛ', // Twi example
-        // title_ga: 'Wiemɔ Shishijee', // Ga example
-        // title_dag: 'Ka wuhi tɔɣibu', // Dagbani example
-        // title_ee: 'Gbegbɔ̃ɖeɖe', // Ewe example
         description: 'Translate text between English and supported Ghanaian languages like Twi, Ga, Dagbani, and Ewe.',
         faqs: [
           {
             q: 'How do I translate text?',
-            // q_tw: 'Mɛyɛ dɛn na makyerɛ kasa ase?',
             a: '1. Go to the "Translator" page.\n2. Select your source and target languages.\n3. Type or paste your text into the input box.\n4. Click the "Translate" button. Your translation will appear in the output box.',
           },
           {
@@ -124,34 +114,32 @@ export default function HelpPage() {
   };
 
   return (
-    <div className="container mx-auto p-4 md:p-8 flex flex-col gap-6 md:gap-8">
-      <div className="text-center md:text-left">
-        <h1 className="font-headline text-3xl md:text-4xl font-bold flex items-center justify-center md:justify-start">
-          <HelpCircle className="w-8 h-8 mr-3 text-primary" />
+    <div className="container mx-auto p-4 md:p-6 flex flex-col gap-4 md:gap-6">
+      <div className="text-center md:text-left mb-4 md:mb-6">
+        <h1 className="font-headline text-2xl sm:text-3xl md:text-4xl font-bold flex items-center justify-center md:justify-start">
+          <HelpCircle className="w-7 h-7 sm:w-8 sm:h-8 mr-2 sm:mr-3 text-primary" />
           {helpContent.title}
         </h1>
-        <p className="text-muted-foreground mt-1 md:mt-2">{helpContent.description}</p>
+        <p className="text-muted-foreground mt-1 md:mt-2 text-sm sm:text-base">{helpContent.description}</p>
       </div>
 
       {helpContent.sections.map((section) => (
         <Card key={section.id} id={section.id} className="card-animated">
           <CardHeader className="px-4 sm:px-6 pt-4 pb-2">
-            <CardTitle className="flex items-center text-xl md:text-2xl">
-              <section.icon className="w-6 h-6 mr-3 text-primary" />
+            <CardTitle className="flex items-center text-lg sm:text-xl md:text-2xl">
+              <section.icon className="w-5 h-5 sm:w-6 sm:h-6 mr-2 sm:mr-3 text-primary" />
               {section.title}
-              {/* Example for multilingual title: {section.title_tw || section.title} */}
             </CardTitle>
-            <CardDescription>{section.description}</CardDescription>
+            <CardDescription className="text-xs sm:text-sm">{section.description}</CardDescription>
           </CardHeader>
           <CardContent className="px-4 sm:px-6 pb-4">
             <Accordion type="single" collapsible className="w-full">
               {section.faqs.map((faq, index) => (
                 <AccordionItem value={`${section.id}-item-${index}`} key={index}>
-                  <AccordionTrigger className="text-left hover:no-underline text-sm md:text-base">
+                  <AccordionTrigger className="text-left hover:no-underline text-sm md:text-base py-3">
                     {faq.q}
-                    {/* Example for multilingual question: {faq.q_tw || faq.q} */}
                   </AccordionTrigger>
-                  <AccordionContent className="text-muted-foreground text-xs md:text-sm whitespace-pre-line">
+                  <AccordionContent className="text-muted-foreground text-xs md:text-sm whitespace-pre-line pt-1 pb-3">
                     {faq.a}
                   </AccordionContent>
                 </AccordionItem>
@@ -161,13 +149,13 @@ export default function HelpPage() {
         </Card>
       ))}
 
-      <Card id="contact" className="card-animated">
+      <Card id="contact" className="card-animated mt-2">
         <CardHeader className="px-4 sm:px-6 pt-4 pb-2">
-          <CardTitle className="flex items-center text-xl md:text-2xl">
-            <Mail className="w-6 h-6 mr-3 text-primary" />
+          <CardTitle className="flex items-center text-lg sm:text-xl md:text-2xl">
+            <Mail className="w-5 h-5 sm:w-6 sm:h-6 mr-2 sm:mr-3 text-primary" />
             Contact & Feedback
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-xs sm:text-sm">
             Have questions not answered here, or want to report an issue?
           </CardDescription>
         </CardHeader>

@@ -13,7 +13,7 @@ import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
 export default function AppHeader() {
   const { user, logout } = useAuth();
   const { textSize, setTextSize } = useTextSize();
-  const { isMobile, setOpenMobile } = useSidebar(); // Get sidebar context
+  const { setOpenMobile } = useSidebar(); 
 
   const handleTextSizeChange = (newSize: 'text-size-sm' | 'text-size-md' | 'text-size-lg') => {
     setTextSize(newSize);
@@ -21,7 +21,7 @@ export default function AppHeader() {
 
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-card shadow-sm">
-      <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
+      <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6">
         <div className="flex items-center gap-2">
           {/* Mobile Sidebar Trigger - visible only on md:hidden. Opens the sheet. */}
           <div className="md:hidden">
@@ -39,13 +39,13 @@ export default function AppHeader() {
             </SidebarTrigger>
           </div>
 
-          <Link href="/translate" className="flex items-center gap-2">
-            <Globe className="h-7 w-7 text-primary" />
-            <span className="font-headline text-xl font-semibold hidden sm:inline">LinguaGhana</span>
+          <Link href="/translate" className="flex items-center gap-2 text-primary hover:opacity-80 transition-opacity">
+            <Globe className="h-6 w-6 sm:h-7 sm:w-7" />
+            <span className="font-headline text-lg sm:text-xl font-semibold hidden sm:inline">LinguaGhana</span>
           </Link>
         </div>
 
-        <div className="flex items-center gap-2 sm:gap-4">
+        <div className="flex items-center gap-2 sm:gap-3">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" aria-label="Adjust text size">
@@ -70,15 +70,22 @@ export default function AppHeader() {
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-9 w-9 rounded-full">
-                  <Avatar className="h-9 w-9">
+                <Button variant="ghost" className="relative h-8 w-8 sm:h-9 sm:w-9 rounded-full">
+                  <Avatar className="h-8 w-8 sm:h-9 sm:w-9">
                     <AvatarImage src={user.photoURL || undefined} alt={user.displayName || user.email || 'User'} data-ai-hint="person avatar" />
                     <AvatarFallback>{user.email?.[0].toUpperCase() || 'U'}</AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>{user.email}</DropdownMenuLabel>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">{user.displayName || 'User'}</p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      {user.email}
+                    </p>
+                  </div>
+                </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <Link href="/settings" passHref legacyBehavior>
                   <DropdownMenuItem>
@@ -93,7 +100,7 @@ export default function AppHeader() {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Button asChild variant="outline" className="btn-animated">
+            <Button asChild variant="outline" size="sm" className="btn-animated">
               <Link href="/login">Login</Link>
             </Button>
           )}
