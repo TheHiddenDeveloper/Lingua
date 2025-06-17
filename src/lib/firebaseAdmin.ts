@@ -1,10 +1,10 @@
-
-// This file exports SDK instances, not just async functions.
+// Removed 'use server;' as this file exports SDK instances, not just async functions.
 
 import { initializeApp, cert, getApps, type App as AdminApp } from 'firebase-admin/app';
 import { getFirestore, type Firestore, FieldValue } from 'firebase-admin/firestore';
 import { getAuth, type Auth } from 'firebase-admin/auth';
-import { firebaseConfig } from './firebaseConfig'; // For projectId, storageBucket
+import { firebaseConfig } from './firebaseConfig';
+import { loadEnvironment } from './env';
 
 let _app: AdminApp;
 let _db: Firestore;
@@ -13,54 +13,40 @@ let _authAdmin: Auth;
 console.log('firebaseAdmin.ts: Module loaded. Attempting to initialize Firebase Admin SDK...');
 
 function getServiceAccountFromEnv(): object {
-  const base64Sdk = process.env.FIREBASE_ADMIN_SDK_BASE64;
-  if (!base64Sdk) {
-    console.error('firebaseAdmin.ts: CRITICAL ERROR - FIREBASE_ADMIN_SDK_BASE64 environment variable is not set.');
-    throw new Error('FIREBASE_ADMIN_SDK_BASE64 environment variable is required for Admin SDK initialization and is not set.');
-  }
+  const { adminSdk } = loadEnvironment();
 
   try {
-    const decodedJson = Buffer.from(base64Sdk, 'base64').toString('utf-8');
+    const decodedJson = Buffer.from(adminSdk, 'base64').toString('utf-8');
     console.log('firebaseAdmin.ts: Successfully decoded FIREBASE_ADMIN_SDK_BASE64.');
     const serviceAccountObject = JSON.parse(decodedJson);
-    console.log(
-      'firebaseAdmin.ts: Parsed service account. Client Email in key:', 
-      serviceAccountObject.client_email, 
-      'Project ID in key:', 
-      serviceAccountObject.project_id
-    );
-    if (serviceAccountObject.project_id !== firebaseConfig.projectId) {
-      console.warn(
-        `firebaseAdmin.ts: WARNING - Project ID in service account key ('${serviceAccountObject.project_id}') ` +
-        `does not match firebaseConfig.projectId ('${firebaseConfig.projectId}'). This can lead to issues.`
-      );
+
+    // Validate the service account object
+    if (!serviceAccountObject.project_id || !serviceAccountObject.private_key) {
+      throw new Error('Invalid service account format');
     }
+
     return serviceAccountObject;
   } catch (error) {
-    console.error('firebaseAdmin.ts: CRITICAL ERROR - Failed to parse FIREBASE_ADMIN_SDK_BASE64. Ensure it is a valid Base64 encoded JSON string.', error);
-    throw new Error('Failed to parse FIREBASE_ADMIN_SDK_BASE64. Admin SDK initialization failed.');
+    console.error('firebaseAdmin.ts: Failed to parse admin SDK:', error);
+    throw error;
   }
 }
 
-if (!getApps().length) {
-  console.log('firebaseAdmin.ts: No existing Firebase Admin apps found. Initializing a new app.');
-  const serviceAccount = getServiceAccountFromEnv(); 
 
-  console.log('firebaseAdmin.ts: Using projectId from firebaseConfig for initialization:', firebaseConfig.projectId);
-  if (!firebaseConfig.projectId) {
-    console.warn('firebaseAdmin.ts: firebaseConfig.projectId is undefined or empty. This is highly likely to lead to initialization issues if not overridden by service account.');
-  }
+if (!getApps().length) {
+  const serviceAccount = getServiceAccountFromEnv();
 
   try {
     _app = initializeApp({
-      credential: cert(serviceAccount), // serviceAccount is now guaranteed to be an object
-      projectId: firebaseConfig.projectId, 
+      credential: cert(serviceAccount as any),
+      projectId: serviceAccount.project_id, // Use project_id from service account instead
+      databaseURL: `https://${serviceAccount.project_id}.firebaseio.com`,
       storageBucket: firebaseConfig.storageBucket,
     });
     console.log('firebaseAdmin.ts: New Firebase Admin App initialized. App Name:', _app.name);
   } catch (error: any) {
     console.error('firebaseAdmin.ts: Firebase Admin SDK initializeApp error:', error);
-    throw new Error(`Firebase Admin SDK initialization failed: ${error.message || 'Unknown error'}`);
+    throw error;
   }
 } else {
   _app = getApps()[0];
@@ -68,6 +54,7 @@ if (!getApps().length) {
 }
 
 if (!_app) {
+  // This state should ideally not be reached.
   console.error("firebaseAdmin.ts: Firebase Admin App (_app) is null or undefined after initialization attempts.");
   throw new Error("Firebase Admin App was not initialized. Cannot get Firestore/Auth instances.");
 }
@@ -75,10 +62,10 @@ if (!_app) {
 try {
   _db = getFirestore(_app);
   console.log('firebaseAdmin.ts: Firestore instance obtained.');
-  if (_db && _db.projectId) {
-    console.log('firebaseAdmin.ts: Firestore instance is valid. Firestore Project ID from _db.projectId:', _db.projectId);
+  if (_db) {
+    console.log('firebaseAdmin.ts: Firestore instance is valid.');
   } else {
-    console.error('firebaseAdmin.ts: _db (Firestore instance) is null, undefined, or has no projectId.');
+    console.error('firebaseAdmin.ts: _db (Firestore instance) is null or undefined.');
   }
 } catch (error: any) {
   console.error('firebaseAdmin.ts: Error getting Firestore instance:', error);
@@ -92,6 +79,18 @@ try {
   console.error('firebaseAdmin.ts: Error getting Auth instance:', error);
   throw new Error(`Failed to get Auth instance: ${error.message || 'Unknown error'}`);
 }
+
+// Test the connection immediately
+_db.collection('_test_').doc('_test_')
+  .set({ timestamp: FieldValue.serverTimestamp() })
+  .then(() => {
+    console.log('firebaseAdmin.ts: Successfully tested Firestore write access');
+    return _db.collection('_test_').doc('_test_').delete();
+  })
+  .catch((error) => {
+    console.error('firebaseAdmin.ts: Firestore write test failed:', error);
+    // Don't throw here, just log the error
+  });
 
 export const adminDb = _db;
 export const adminAuth = _authAdmin;
