@@ -28,7 +28,7 @@ const supportedLanguages = [
 const langToBCP47 = (langCode: string): string => {
   switch (langCode) {
     case 'en': return 'en-US';
-    case 'tw': return 'ak-GH'; 
+    case 'tw': return 'ak-GH';
     case 'ga': return 'ga-GH';
     case 'dag': return 'dag-GH';
     case 'ee': return 'ee-GH';
@@ -81,7 +81,7 @@ export default function TranslatePage() {
       const apiSourceForFinalStep = sourceForFinalApiCall === 'ga' ? 'gaa' : sourceForFinalApiCall; const apiTargetForFinalStep = targetLang === 'ga' ? 'gaa' : targetLang; const finalLangPair = `${apiSourceForFinalStep}-${apiTargetForFinalStep}`;
       const responseToTarget = await fetchGhanaNLP('https://translation-api.ghananlp.org/v1/translate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ in: textForFinalTranslation, lang: finalLangPair }), });
       const translatedText = await responseToTarget.text();
-      if (!translatedText.trim() && isLocalToLocal) { throw new Error('Final translation from English to target local language resulted in empty or whitespace text.'); } 
+      if (!translatedText.trim() && isLocalToLocal) { throw new Error('Final translation from English to target local language resulted in empty or whitespace text.'); }
       else if (!translatedText.trim() && !isLocalToLocal) { throw new Error('Translation resulted in empty or whitespace text.'); }
       setOutputText(translatedText); toast({ title: 'Translation Complete', description: 'Text translated successfully.' });
       if (user && user.uid) { logTextTranslation({ userId: user.uid, originalText: inputText, translatedText, sourceLanguage: sourceLang, targetLanguage: targetLang }).then(logResult => { if (!logResult.success) { console.warn('Failed to log translation to history (server-side):', logResult.error); toast({ title: 'History Logging Failed', description: `Could not save translation to history: ${logResult.error || 'Unknown error'}`, variant: 'destructive'}); } }).catch(logError => { console.error("Client-side error calling logTextTranslation flow:", logError); toast({ title: 'History Logging Error', description: `Error trying to save translation to history: ${logError.message || 'Unknown error'}`, variant: 'destructive'}); }); }
@@ -110,7 +110,7 @@ export default function TranslatePage() {
   return (
     <div className="flex flex-col gap-4 md:gap-6">
       <div className="text-center">
-        <h1 className="font-headline text-2xl sm:text-3xl md:text-4xl font-bold">LinguaGhana Translator</h1>
+        <h1 className="font-headline text-2xl sm:text-3xl md:text-4xl font-bold">Polyglot Translator</h1>
         <p className="text-muted-foreground mt-1 md:mt-2 text-sm sm:text-base">Translate between English and Ghanaian languages.</p>
       </div>
       {translationPageError && ( <Alert variant="destructive" className="my-4"><AlertTriangle className="h-4 w-4" /><AlertTitle>Translation Error</AlertTitle><AlertDescription>{translationPageError}</AlertDescription></Alert> )}
@@ -167,7 +167,7 @@ export default function TranslatePage() {
       </div>
 
       {aiError && ( <Alert variant="destructive" className="mt-4 md:mt-6"><AlertTriangle className="h-4 w-4" /><AlertTitle>AI Summarization Error</AlertTitle><AlertDescription>{aiError}</AlertDescription></Alert> )}
-      
+
       {summary && (
         <div className="mt-4 md:mt-6 border rounded-lg p-4 sm:p-6 bg-background shadow-sm">
           <h2 className="font-headline text-lg sm:text-xl mb-2">Translation Summary</h2>
@@ -179,5 +179,3 @@ export default function TranslatePage() {
     </div>
   );
 }
-
-    

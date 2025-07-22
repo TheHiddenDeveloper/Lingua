@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect } from 'react';
@@ -22,7 +23,7 @@ export default function HomePage() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center">
       <LoadingSpinner size="lg" />
-      <p className="mt-4 text-muted-foreground">Loading LinguaGhana...</p>
+      <p className="mt-4 text-muted-foreground">Loading Polyglot...</p>
     </div>
   );
 }

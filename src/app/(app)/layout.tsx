@@ -79,13 +79,13 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           </Tabs>
         </div>
       )}
-      
+
       <main className="flex-1 container mx-auto p-4 sm:p-6 lg:p-8 overflow-y-auto mt-2">
         {children}
       </main>
 
       <footer className="py-4 text-center text-xs sm:text-sm text-muted-foreground border-t">
-        © {new Date().getFullYear()} LinguaGhana. All rights reserved.
+        © {new Date().getFullYear()} Polyglot. All rights reserved.
       </footer>
     </div>
   );

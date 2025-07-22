@@ -36,7 +36,7 @@ export default function SignupPage() {
       router.push('/translate');
     }
   }, [user, router]);
-  
+
   const form = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
     defaultValues: {
@@ -68,13 +68,13 @@ export default function SignupPage() {
   if (user && !loading) { // Check loading state to avoid rendering form during redirect
     return <div className="flex min-h-screen items-center justify-center"><p>Redirecting...</p></div>;
   }
-  
+
   if (loading && !user) { // Show loading only if not redirecting yet
      return <div className="flex min-h-screen items-center justify-center"><p>Loading...</p></div>;
   }
 
   return (
-    <AuthFormWrapper title="Create Account" description="Join LinguaGhana and start translating.">
+    <AuthFormWrapper title="Create Account" description="Join Polyglot and start translating.">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <FormField
@@ -136,13 +136,13 @@ export default function SignupPage() {
         </div>
       </div>
 
-      <Button 
-        variant="outline" 
-        className="w-full btn-animated" 
+      <Button
+        variant="outline"
+        className="w-full btn-animated"
         onClick={handleGoogleSignIn}
         disabled={loading}
       >
-        <Chrome className="mr-2 h-4 w-4" /> 
+        <Chrome className="mr-2 h-4 w-4" />
         Sign up with Google
       </Button>
 
@@ -155,4 +155,3 @@ export default function SignupPage() {
     </AuthFormWrapper>
   );
 }
-

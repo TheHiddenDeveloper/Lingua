@@ -9,9 +9,9 @@ import Link from 'next/link';
 
 export default function HelpPage() {
   const helpContent = {
-    title: 'LinguaGhana Help Center',
-    description: 'Find answers to common questions and learn how to use LinguaGhana effectively.',
-    contactEmail: 'support@linguaghana.app', 
+    title: 'Polyglot Help Center',
+    description: 'Find answers to common questions and learn how to use Polyglot effectively.',
+    contactEmail: 'support@polyglot.app',
 
     sections: [
       {
@@ -26,7 +26,7 @@ export default function HelpPage() {
           },
           {
             q: 'Which languages are supported for translation?',
-            a: 'Currently, LinguaGhana supports translation between English, Twi, Ga, Dagbani, and Ewe.',
+            a: 'Currently, Polyglot supports translation between English, Twi, Ga, Dagbani, and Ewe.',
           },
           {
             q: 'Is there a character limit for translation?',
@@ -164,7 +164,7 @@ export default function HelpPage() {
             We value your feedback! If you encounter any problems, have suggestions, or need further assistance, please don&apos;t hesitate to reach out.
           </p>
           <Button asChild className="btn-animated w-full sm:w-auto">
-            <a href={`mailto:${helpContent.contactEmail}?subject=LinguaGhana%20Feedback`}>
+            <a href={`mailto:${helpContent.contactEmail}?subject=Polyglot%20Feedback`}>
               <Mail className="mr-2 h-4 w-4" /> Email Support
             </a>
           </Button>

@@ -8,7 +8,7 @@ import { ThemeProvider } from '@/contexts/ThemeContext';
 import { GhanaNLPProvider } from '@/contexts/GhanaNLPContext'; // Import GhanaNLPProvider
 
 export const metadata: Metadata = {
-  title: 'LinguaGhana - Translate Ghanaian Languages',
+  title: 'Polyglot - Advanced AI Translator',
   description: 'Real-time translation for Twi, Ga, Dagbani, Ewe and English with voice support and AI summaries.',
 };
 

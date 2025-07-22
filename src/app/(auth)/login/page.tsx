@@ -59,19 +59,19 @@ export default function LoginPage() {
       toast({ title: 'Sign-In Error', description: 'An unexpected error occurred during Google Sign-In.', variant: 'destructive' });
     }
   };
-  
+
 
   if (user && !loading) { // Check loading state to avoid rendering form during redirect
     return <div className="flex min-h-screen items-center justify-center"><p>Redirecting...</p></div>;
   }
-  
+
   if (loading && !user) { // Show loading only if not redirecting yet
      return <div className="flex min-h-screen items-center justify-center"><p>Loading...</p></div>;
   }
 
 
   return (
-    <AuthFormWrapper title="LinguaGhana Login" description="Access your translations and learning tools.">
+    <AuthFormWrapper title="Polyglot Login" description="Access your translations and learning tools.">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <FormField
@@ -114,19 +114,19 @@ export default function LoginPage() {
           <span className="w-full border-t" />
         </div>
         <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-card px-2 text-muted-foreground"> 
+          <span className="bg-card px-2 text-muted-foreground">
             Or continue with
           </span>
         </div>
       </div>
 
-      <Button 
-        variant="outline" 
-        className="w-full btn-animated" 
+      <Button
+        variant="outline"
+        className="w-full btn-animated"
         onClick={handleGoogleSignIn}
         disabled={loading}
       >
-        <Chrome className="mr-2 h-4 w-4" /> 
+        <Chrome className="mr-2 h-4 w-4" />
         Sign in with Google
       </Button>
 
@@ -139,4 +139,3 @@ export default function LoginPage() {
     </AuthFormWrapper>
   );
 }
-

@@ -39,10 +39,10 @@ export default function AboutPage() {
       <div className="text-center md:text-left mb-4 md:mb-6">
         <h1 className="font-headline text-2xl sm:text-3xl md:text-4xl font-bold flex items-center justify-center md:justify-start">
           <Info className="w-7 h-7 sm:w-8 sm:h-8 mr-2 sm:mr-3 text-primary" />
-          About LinguaGhana
+          About Polyglot
         </h1>
         <p className="text-muted-foreground mt-1 md:mt-2 text-sm sm:text-base">
-          Breaking language barriers and fostering understanding across Ghana.
+          Breaking language barriers and fostering understanding.
         </p>
       </div>
 
@@ -55,8 +55,7 @@ export default function AboutPage() {
         </CardHeader>
         <CardContent className="px-4 sm:px-6 pb-4 text-sm md:text-base text-muted-foreground space-y-2">
           <p className="text-justify">
-            LinguaGhana is dedicated to bridging communication gaps within Ghana by providing accessible and reliable translation tools. 
-            We aim to support seamless translation between English and key Ghanaian languages including Twi, Ga, Dagbani, and Ewe.
+            Polyglot is dedicated to bridging communication gaps by providing accessible and reliable translation tools.
           </p>
           <p className="text-justify">
             Our goal is to empower individuals, promote cultural exchange, and make information more accessible to all, regardless of linguistic background.
@@ -73,12 +72,11 @@ export default function AboutPage() {
         </CardHeader>
         <CardContent className="px-4 sm:px-6 pb-4 text-sm md:text-base text-muted-foreground space-y-2">
           <p className="text-justify">
-            LinguaGhana was born as a final year undergraduate project at the prestigious University of Mines and Technology (UMaT), Tarkwa. 
-            The project was driven by a passion for technology and a deep appreciation for Ghana&apos;s rich linguistic diversity.
+            This application was born from a passion for technology and a deep appreciation for the world's rich linguistic diversity.
           </p>
           <p className="text-justify">
-            We recognized the cultural significance of local languages and the need for tools that make inter-language communication easier. 
-            This app represents our commitment to leveraging technology for positive social impact and celebrating Ghanaian heritage.
+            We recognized the need for tools that make inter-language communication easier.
+            This app represents our commitment to leveraging technology for positive social impact.
           </p>
         </CardContent>
       </Card>
@@ -123,7 +121,7 @@ export default function AboutPage() {
           ))}
         </CardContent>
       </Card>
-      
+
       <Card id="tech" className="card-animated">
         <CardHeader className="px-4 sm:px-6 pt-4 pb-2">
           <CardTitle className="flex items-center text-lg sm:text-xl md:text-2xl">
@@ -132,7 +130,7 @@ export default function AboutPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="px-4 sm:px-6 pb-4 text-sm text-muted-foreground">
-          <p className="mb-3 text-justify">LinguaGhana is built with modern technologies and relies on several fantastic tools and services:</p>
+          <p className="mb-3 text-justify">Polyglot is built with modern technologies and relies on several fantastic tools and services:</p>
           <ul className="list-disc list-inside space-y-1.5 pl-2">
             {techCredits.map((tech) => (
               <li key={tech.name}>
@@ -151,9 +149,9 @@ export default function AboutPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="px-4 sm:px-6 pb-4 text-sm md:text-base text-muted-foreground">
-          <p>LinguaGhana Version: {APP_VERSION}</p>
+          <p>Polyglot Version: {APP_VERSION}</p>
           <p className="mt-1 text-justify">
-            We are continuously working to improve LinguaGhana. For the latest updates, please check our project repository or announcements.
+            We are continuously working to improve Polyglot. For the latest updates, please check our project repository or announcements.
           </p>
         </CardContent>
       </Card>
@@ -170,7 +168,7 @@ export default function AboutPage() {
             Your feedback is invaluable to us! If you have questions, suggestions, or encounter issues, please reach out.
           </p>
           <Button asChild className="btn-animated w-full sm:w-auto">
-            <Link href={`mailto:anchrisoft@gmail.com?subject=LinguaGhana%20Feedback`}>
+            <Link href={`mailto:anchrisoft@gmail.com?subject=Polyglot%20Feedback`}>
               <Mail className="mr-2 h-4 w-4" /> Email Us
             </Link>
           </Button>

@@ -57,7 +57,7 @@ export default function AppHeader() {
                 <SheetHeader className="p-4 border-b">
                   <SheetTitle className="flex items-center gap-2 text-lg">
                      <Globe className="h-6 w-6 text-primary" />
-                     LinguaGhana
+                     Polyglot
                   </SheetTitle>
                 </SheetHeader>
                 <nav className="flex-1 flex flex-col p-4 space-y-1 overflow-y-auto">
@@ -84,7 +84,7 @@ export default function AppHeader() {
           {/* Logo */}
           <Link href="/translate" className="flex items-center gap-2 text-primary hover:opacity-80 transition-opacity">
             <Globe className="h-6 w-6 sm:h-7 sm:w-7" />
-            <span className="font-headline text-lg sm:text-xl font-semibold hidden sm:inline">LinguaGhana</span>
+            <span className="font-headline text-lg sm:text-xl font-semibold hidden sm:inline">Polyglot</span>
           </Link>
         </div>
 
@@ -96,10 +96,10 @@ export default function AppHeader() {
               <TooltipProvider key={item.href} delayDuration={100}>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      asChild 
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      asChild
                       className={cn(pathname.startsWith(item.href) && "bg-accent text-accent-foreground")}
                     >
                       <Link href={item.href} aria-label={item.label}>
@@ -114,7 +114,7 @@ export default function AppHeader() {
               </TooltipProvider>
             ))}
           </nav>
-          
+
           <div className="hidden md:block h-6 border-l mx-1 sm:mx-2"></div>
 
 
