@@ -70,10 +70,10 @@ export default function HistoryPage() {
       const collectionName = getCollectionName(tab);
       const historyCollectionRef = collection(db, `userHistories/${user.uid}/${collectionName}`);
       
-      const currentLastDoc = historyState[tab].lastDoc;
+      const currentLastDoc = loadMore ? historyState[tab].lastDoc : null;
       let q;
 
-      if (loadMore && currentLastDoc) {
+      if (currentLastDoc) {
         console.log(`[History] Querying more for ${tab} starting after doc:`, currentLastDoc.id);
         q = query(historyCollectionRef, orderBy('timestamp', 'desc'), startAfter(currentLastDoc), limit(PAGE_SIZE));
       } else {
@@ -114,24 +114,24 @@ export default function HistoryPage() {
         [tab]: { ...prev[tab], isLoading: false, error: `Failed to load ${tab} history. ${err.message}` }
       }));
     }
-  }, [user, historyState]); // Depends on full historyState to access lastDoc
+  }, [user, historyState]); // Intentionally keeping historyState here to access lastDoc, but the logic inside `useEffect` will prevent the loop.
 
   useEffect(() => {
     if (user && !authLoading) {
       // Fetch history for the active tab only if it hasn't been fetched yet
       if (historyState[activeTab].isLoading && historyState[activeTab].items.length === 0) {
-        fetchHistory(activeTab);
+        fetchHistory(activeTab, false);
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, authLoading, activeTab, fetchHistory]);
+  }, [user, authLoading, activeTab]); // Removed fetchHistory from dependency array to break the loop.
 
   const handleTabChange = (value: string) => {
     const newTab = value as HistoryTab;
     setActiveTab(newTab);
     // Trigger fetch for the new tab if it's in its initial state
     if (user && historyState[newTab].items.length === 0 && historyState[newTab].hasMore) {
-        fetchHistory(newTab);
+        fetchHistory(newTab, false);
     }
   };
   
@@ -149,43 +149,55 @@ export default function HistoryPage() {
       case 'translations':
         const transItem = item as TextTranslationHistoryEntry;
         return (
-          <Card key={key} className="mb-4 card-animated">
-            <CardHeader className="pb-2 pt-4 px-4 sm:px-6"><CardTitle className="text-sm sm:text-base">Translation</CardTitle><CardDescription className="text-xs">{timeAgo}</CardDescription></CardHeader>
-            <CardContent className="text-xs sm:text-sm space-y-1 px-4 sm:px-6 pb-4">
-              <p><strong>From ({transItem.sourceLanguage}):</strong> {transItem.originalText}</p>
-              <p><strong>To ({transItem.targetLanguage}):</strong> {transItem.translatedText}</p>
-            </CardContent>
-          </Card>
+          <div key={key} className="mb-4 rounded-lg border bg-card p-4 shadow-sm transition-all hover:shadow-md">
+            <div className="flex justify-between items-center mb-2">
+              <p className="font-semibold text-base">Translation</p>
+              <p className="text-xs text-muted-foreground">{timeAgo}</p>
+            </div>
+            <div className="text-sm space-y-2">
+              <p><strong className="text-muted-foreground">From ({transItem.sourceLanguage}):</strong> {transItem.originalText}</p>
+              <p><strong className="text-muted-foreground">To ({transItem.targetLanguage}):</strong> {transItem.translatedText}</p>
+            </div>
+          </div>
         );
       case 'summaries':
         const summaryItem = item as TextSummaryHistoryEntry;
         return (
-          <Card key={key} className="mb-4 card-animated">
-            <CardHeader className="pb-2 pt-4 px-4 sm:px-6"><CardTitle className="text-sm sm:text-base">Summary ({summaryItem.language})</CardTitle><CardDescription className="text-xs">{timeAgo}</CardDescription></CardHeader>
-            <CardContent className="text-xs sm:text-sm space-y-2 px-4 sm:px-6 pb-4">
-              <div><p className="font-semibold">Original:</p><ScrollArea className="h-20 rounded-md border p-2 bg-muted/20 mt-1"><p className="whitespace-pre-wrap text-xs">{summaryItem.originalText}</p></ScrollArea></div>
-              <div><p className="font-semibold mt-1">Summary:</p><ScrollArea className="h-20 rounded-md border p-2 bg-muted/20 mt-1"><p className="whitespace-pre-wrap text-xs">{summaryItem.summarizedText}</p></ScrollArea></div>
-            </CardContent>
-          </Card>
+          <div key={key} className="mb-4 rounded-lg border bg-card p-4 shadow-sm transition-all hover:shadow-md">
+            <div className="flex justify-between items-center mb-2">
+              <p className="font-semibold text-base">Summary ({summaryItem.language})</p>
+              <p className="text-xs text-muted-foreground">{timeAgo}</p>
+            </div>
+            <div className="text-sm space-y-3">
+              <div><p className="font-medium mb-1">Original:</p><ScrollArea className="h-24 rounded-md border bg-muted/30 p-2"><p className="whitespace-pre-wrap text-xs">{summaryItem.originalText}</p></ScrollArea></div>
+              <div><p className="font-medium mb-1">Summary:</p><ScrollArea className="h-24 rounded-md border bg-muted/30 p-2"><p className="whitespace-pre-wrap text-xs">{summaryItem.summarizedText}</p></ScrollArea></div>
+            </div>
+          </div>
         );
       case 'vot':
         const votItem = item as VoiceToTextHistoryEntry;
         return (
-          <Card key={key} className="mb-4 card-animated">
-            <CardHeader className="pb-2 pt-4 px-4 sm:px-6"><CardTitle className="text-sm sm:text-base">Voice-to-Text ({votItem.detectedLanguage})</CardTitle><CardDescription className="text-xs">{timeAgo}</CardDescription></CardHeader>
-            <CardContent className="text-xs sm:text-sm px-4 sm:px-6 pb-4"><p>&quot;{votItem.recognizedSpeech}&quot;</p></CardContent>
-          </Card>
+          <div key={key} className="mb-4 rounded-lg border bg-card p-4 shadow-sm transition-all hover:shadow-md">
+            <div className="flex justify-between items-center mb-2">
+              <p className="font-semibold text-base">Voice-to-Text ({votItem.detectedLanguage})</p>
+              <p className="text-xs text-muted-foreground">{timeAgo}</p>
+            </div>
+            <p className="text-sm italic">&quot;{votItem.recognizedSpeech}&quot;</p>
+          </div>
         );
       case 'tts':
         const ttsItem = item as TextToSpeechHistoryEntry;
         return (
-          <Card key={key} className="mb-4 card-animated">
-            <CardHeader className="pb-2 pt-4 px-4 sm:px-6"><CardTitle className="text-sm sm:text-base">Text-to-Speech ({ttsItem.selectedLanguage})</CardTitle><CardDescription className="text-xs">{timeAgo}</CardDescription></CardHeader>
-            <CardContent className="text-xs sm:text-sm space-y-1 px-4 sm:px-6 pb-4">
-              <p><strong>Text:</strong> {ttsItem.spokenText}</p>
-              {ttsItem.speakerId && <p><strong>Speaker:</strong> {ttsItem.speakerId}</p>}
-            </CardContent>
-          </Card>
+          <div key={key} className="mb-4 rounded-lg border bg-card p-4 shadow-sm transition-all hover:shadow-md">
+            <div className="flex justify-between items-center mb-2">
+              <p className="font-semibold text-base">Text-to-Speech ({ttsItem.selectedLanguage})</p>
+              <p className="text-xs text-muted-foreground">{timeAgo}</p>
+            </div>
+            <div className="text-sm space-y-1">
+              <p><strong className="text-muted-foreground">Text:</strong> {ttsItem.spokenText}</p>
+              {ttsItem.speakerId && <p><strong className="text-muted-foreground">Speaker:</strong> {ttsItem.speakerId}</p>}
+            </div>
+          </div>
         );
       default: return null;
     }
@@ -211,10 +223,10 @@ export default function HistoryPage() {
     }
 
     return (
-      <>
-        <ScrollArea className="h-[calc(100vh-26rem)] sm:h-[calc(100vh-24rem)] pr-2 sm:pr-4">
+      <div className="space-y-4">
+        <div>
           {items.map(item => renderHistoryItem(item, tab))}
-        </ScrollArea>
+        </div>
         {hasMore && (
           <div className="text-center mt-4 md:mt-6">
             <Button onClick={handleLoadMore} variant="outline" disabled={isLoading}>
@@ -223,7 +235,7 @@ export default function HistoryPage() {
           </div>
         )}
         {isLoading && items.length > 0 && <div className="text-center py-4"><LoadingSpinner size="sm" /></div>}
-      </>
+      </div>
     );
   };
 
@@ -231,26 +243,28 @@ export default function HistoryPage() {
   if (!user) return <div className="text-center p-4 md:p-8">Please log in to view your history.</div>;
 
   return (
-    <div className="container mx-auto p-4 md:p-6">
-      <div className="text-center md:text-left mb-4 md:mb-6">
+    <div className="flex flex-col gap-4 md:gap-6">
+      <div className="text-center md:text-left mb-2 md:mb-4">
         <h1 className="font-headline text-2xl sm:text-3xl md:text-4xl font-bold flex items-center justify-center md:justify-start">
           <HistoryIcon className="w-7 h-7 sm:w-8 sm:h-8 mr-2 sm:mr-3 text-primary" />
           Activity History
         </h1>
+        <p className="text-muted-foreground mt-1 text-sm">Review your past activities.</p>
       </div>
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 mb-4 md:mb-6 h-auto sm:h-10">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-auto sm:h-10">
           <TabsTrigger value="translations" className="text-xs sm:text-sm py-1.5 sm:py-2">Translations</TabsTrigger>
           <TabsTrigger value="summaries" className="text-xs sm:text-sm py-1.5 sm:py-2">Summaries</TabsTrigger>
           <TabsTrigger value="vot" className="text-xs sm:text-sm py-1.5 sm:py-2">Voice-to-Text</TabsTrigger>
           <TabsTrigger value="tts" className="text-xs sm:text-sm py-1.5 sm:py-2">Text-to-Speech</TabsTrigger>
         </TabsList>
-        <TabsContent value="translations">{renderTabContent('translations')}</TabsContent>
-        <TabsContent value="summaries">{renderTabContent('summaries')}</TabsContent>
-        <TabsContent value="vot">{renderTabContent('vot')}</TabsContent>
-        <TabsContent value="tts">{renderTabContent('tts')}</TabsContent>
+        <div className="mt-4">
+            <TabsContent value="translations" forceMount={activeTab === 'translations' ? undefined : true} hidden={activeTab !== 'translations'}>{renderTabContent('translations')}</TabsContent>
+            <TabsContent value="summaries" forceMount={activeTab === 'summaries' ? undefined : true} hidden={activeTab !== 'summaries'}>{renderTabContent('summaries')}</TabsContent>
+            <TabsContent value="vot" forceMount={activeTab === 'vot' ? undefined : true} hidden={activeTab !== 'vot'}>{renderTabContent('vot')}</TabsContent>
+            <TabsContent value="tts" forceMount={activeTab === 'tts' ? undefined : true} hidden={activeTab !== 'tts'}>{renderTabContent('tts')}</TabsContent>
+        </div>
       </Tabs>
     </div>
   );
 }
-
