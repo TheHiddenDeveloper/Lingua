@@ -1,24 +1,57 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper function to check if a user is authenticated
-    function isAuthenticated(request) {
-      return request.auth != null;
+    // User Histories. Match the top-level document for a user.
+    match /userHistories/{userId} {
+      // IMPORTANT: We don't want clients to list all history types or get this parent doc.
+      // So, no general allow read/write here for the /userHistories/{userId} document itself.
+      // Access is granted to subcollections below.
+
+      // Text Translations subcollection
+      match /textTranslations/{translationDocId} {
+        // Allow a user to get individual documents and list documents in their own textTranslations
+        allow get, list: if request.auth != null && request.auth.uid == userId;
+        // Deny client-side writes; Genkit (Admin SDK) handles these
+        allow create, update, delete: if false;
+      }
+
+      // Text Summaries subcollection
+      match /textSummaries/{summaryDocId} {
+        // Allow a user to get individual documents and list documents in their own textSummaries
+        allow get, list: if request.auth != null && request.auth.uid == userId;
+        // Deny client-side writes
+        allow create, update, delete: if false;
+      }
+
+      // Voice-to-Text subcollection
+      match /voiceToText/{votDocId} {
+        // Allow a user to get individual documents and list documents in their own voiceToText
+        allow get, list: if request.auth != null && request.auth.uid == userId;
+        // Deny client-side writes
+        allow create, update, delete: if false;
+      }
+
+      // Text-to-Speech subcollection
+      match /textToSpeech/{ttsDocId} {
+        // Allow a user to get individual documents and list documents in their own textToSpeech
+        allow get, list: if request.auth != null && request.auth.uid == userId;
+        // Deny client-side writes
+        allow create, update, delete: if false;
+      }
+
+      // Fallback: Deny any other operations on other subcollections under userHistories/{userId}
+      // This prevents accidental access to future or mistyped subcollection names.
+      match /{otherCollection}/{otherDocId} {
+        allow read, write: if false;
+      }
     }
 
-    // Helper function to check if the user is the owner of the document
-    function isOwner(request, userId) {
-      return request.auth.uid == userId;
-    }
-
-    // Rules for user history collections
-    match /userHistories/{userId}/{historyCollection}/{docId} {
-      // Allow a user to read, write, update, and delete any document in any of their own history subcollections.
-      // This covers textTranslations, textSummaries, voiceToText, and textToSpeech.
-      allow read, write: if isAuthenticated(request) && isOwner(request, userId);
+    // Global fallback: Deny all other access to any other path by default.
+    // This should be the last rule in the "documents" block.
+    match /{path=**} {
+      allow read, write: if false;
     }
   }
 }
