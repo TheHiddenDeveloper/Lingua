@@ -3,10 +3,22 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow users to read and write only their own history data.
-    // This rule applies to all subcollections like textTranslations, textSummaries, etc.
+
+    // Helper function to check if a user is authenticated
+    function isAuthenticated(request) {
+      return request.auth != null;
+    }
+
+    // Helper function to check if the user is the owner of the document
+    function isOwner(request, userId) {
+      return request.auth.uid == userId;
+    }
+
+    // Rules for user history collections
     match /userHistories/{userId}/{historyCollection}/{docId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      // Allow a user to read, write, update, and delete any document in any of their own history subcollections.
+      // This covers textTranslations, textSummaries, voiceToText, and textToSpeech.
+      allow read, write: if isAuthenticated(request) && isOwner(request, userId);
     }
   }
 }
