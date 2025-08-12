@@ -63,13 +63,11 @@ export default function SummaryPage() {
 
       {error && ( <Alert variant="destructive" className="my-4"><AlertTriangle className="h-4 w-4" /><AlertTitle>Summarization Error</AlertTitle><AlertDescription>{error}</AlertDescription></Alert> )}
 
-      <div className="p-4 sm:p-6 border rounded-lg bg-background shadow-sm space-y-4">
-        <h2 className="text-lg sm:text-xl font-semibold">Summarize Your Text</h2>
-        <p className="text-xs sm:text-sm text-muted-foreground -mt-3">Enter your text, select its language, and click &quot;Summarize&quot;. Max {MAX_INPUT_LENGTH} characters.</p>
-        
+      <div className="space-y-4">
         <div>
-          <Label htmlFor="input-text-area" className="sr-only">Your Text:</Label>
-          <Textarea id="input-text-area" placeholder="Paste your article, essay, or transcript here..." value={inputText} onChange={(e) => setInputText(e.target.value)} className="min-h-[150px] sm:min-h-[200px] text-base resize-none" aria-label="Input text for summarization" maxLength={MAX_INPUT_LENGTH} />
+          <Label htmlFor="input-text-area" className="text-base font-medium">Your Text</Label>
+           <p className="text-xs sm:text-sm text-muted-foreground mb-2">Enter your text, select its language, and click &quot;Summarize&quot;. Max {MAX_INPUT_LENGTH} characters.</p>
+          <Textarea id="input-text-area" placeholder="Paste your article, essay, or transcript here..." value={inputText} onChange={(e) => setInputText(e.target.value)} className="min-h-[150px] sm:min-h-[200px] text-base resize-y" aria-label="Input text for summarization" maxLength={MAX_INPUT_LENGTH} />
           <p className="text-xs text-muted-foreground mt-1 text-right">{inputText.length} / {MAX_INPUT_LENGTH}</p>
         </div>
 
@@ -87,28 +85,27 @@ export default function SummaryPage() {
         </div>
       </div>
 
-      {summary && (
-        <div className="mt-2 p-4 sm:p-6 border rounded-lg bg-background shadow-sm">
+      {(summary || isLoading) && (
+        <div className="mt-2">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-3">
             <h2 className="font-headline text-lg sm:text-xl">Generated Summary</h2>
-            <div className="flex gap-2 self-start sm:self-auto">
-              <Button variant="outline" size="icon" onClick={handleCopySummary} aria-label="Copy summary"><Copy className="h-4 w-4" /></Button>
-              {typeof navigator !== 'undefined' && navigator.share && ( <Button variant="outline" size="icon" onClick={handleShareSummary} aria-label="Share summary"><Share2 className="h-4 w-4" /></Button> )}
-            </div>
+            {summary && (
+                <div className="flex gap-2 self-start sm:self-auto">
+                <Button variant="outline" size="icon" onClick={handleCopySummary} aria-label="Copy summary"><Copy className="h-4 w-4" /></Button>
+                {typeof navigator !== 'undefined' && navigator.share && ( <Button variant="outline" size="icon" onClick={handleShareSummary} aria-label="Share summary"><Share2 className="h-4 w-4" /></Button> )}
+                </div>
+            )}
           </div>
-          <ScrollArea className="h-[150px] sm:h-[200px] w-full rounded-md border p-4 bg-muted/20">
-            <p className="text-sm whitespace-pre-wrap">{summary}</p>
-          </ScrollArea>
-        </div>
-      )}
-      {!isLoading && !summary && !error && inputText.length > 0 && (
-        <div className="mt-2 p-4 sm:p-6 border rounded-lg bg-background shadow-sm">
-          <h2 className="font-headline text-lg sm:text-xl mb-2">Generated Summary</h2>
-          <p className="text-muted-foreground text-sm">Click &quot;Summarize Text&quot; to generate a summary.</p>
+          <div className="p-4 rounded-lg bg-muted/30">
+            {isLoading && <p className="text-muted-foreground">Generating summary...</p>}
+            {summary && !isLoading && (
+                 <ScrollArea className="h-[150px] sm:h-[200px] w-full rounded-md">
+                    <p className="text-sm whitespace-pre-wrap">{summary}</p>
+                </ScrollArea>
+            )}
+          </div>
         </div>
       )}
     </div>
   );
 }
-
-    

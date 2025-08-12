@@ -55,18 +55,19 @@ export default function TextToSpeechPage() {
   if (isLoadingContextData) { return <div className="flex justify-center items-center h-[calc(100vh-10rem)]"><LoadingSpinner size="lg" /> <p className="ml-2">Loading TTS options...</p></div>; }
 
   return (
-    <div className="flex flex-col gap-4 md:gap-6 max-w-2xl mx-auto">
+    <div className="flex flex-col gap-4 md:gap-6 max-w-3xl mx-auto">
       <div className="text-center">
         <h1 className="font-headline text-2xl sm:text-3xl md:text-4xl font-bold">Text-to-Speech</h1>
         <p className="text-muted-foreground mt-1 md:mt-2 text-sm sm:text-base">Convert text into Twi or Ewe speech.</p>
       </div>
       {pageError && (<Alert variant="destructive" className="my-4 px-4 sm:px-6 py-3"><AlertTriangle className="h-4 w-4" /><AlertTitle>Error</AlertTitle><AlertDescription>{pageError}</AlertDescription></Alert>)}
       
-      <div className="p-4 sm:p-6 border rounded-lg bg-background shadow-sm space-y-4">
-        <h2 className="text-lg sm:text-xl font-semibold">Synthesize Speech</h2>
-        <p className="text-xs sm:text-sm text-muted-foreground -mt-3">Enter text, select language & speaker, then synthesize.</p>
-        
-        <Textarea placeholder="Enter text to speak..." value={textToSpeak} onChange={(e) => setTextToSpeak(e.target.value)} className="min-h-[100px] sm:min-h-[150px] text-base resize-none" aria-label="Text to speak" />
+      <div className="space-y-6">
+        <div>
+          <Label htmlFor="tts-input" className="text-base font-medium">Text to Synthesize</Label>
+          <p className="text-xs sm:text-sm text-muted-foreground mb-2">Enter the text you want to hear spoken.</p>
+          <Textarea id="tts-input" placeholder="Enter text to speak..." value={textToSpeak} onChange={(e) => setTextToSpeak(e.target.value)} className="min-h-[100px] sm:min-h-[150px] text-base resize-y" aria-label="Text to speak" />
+        </div>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
@@ -96,19 +97,18 @@ export default function TextToSpeechPage() {
           </div>
         </div>
         
-        <Button onClick={handleSpeak} disabled={isSynthesizing || isLoadingContextData || !textToSpeak.trim() || !selectedLanguageCode || !selectedSpeakerId} className="w-full sm:w-auto btn-animated mt-4" aria-label="Synthesize and play speech">
-          {isSynthesizing ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Volume2 className="mr-2 h-5 w-5" />} Synthesize
-        </Button>
-        
-        {audioSrc && (
-          <div className="mt-4">
-            <Label className="block mb-1 text-sm font-medium">Generated Audio:</Label>
-            <audio key={audioSrc} controls src={audioSrc} className="w-full mt-1" aria-label="Synthesized audio player">Your browser does not support the audio element.</audio>
-          </div>
-        )}
+        <div className="flex flex-col items-center gap-4">
+            <Button onClick={handleSpeak} disabled={isSynthesizing || isLoadingContextData || !textToSpeak.trim() || !selectedLanguageCode || !selectedSpeakerId} className="w-full sm:w-auto btn-animated" size="lg" aria-label="Synthesize and play speech">
+            {isSynthesizing ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Volume2 className="mr-2 h-5 w-5" />} Synthesize
+            </Button>
+            
+            {audioSrc && (
+            <div className="mt-4 w-full">
+                <audio key={audioSrc} controls src={audioSrc} className="w-full" aria-label="Synthesized audio player">Your browser does not support the audio element.</audio>
+            </div>
+            )}
+        </div>
       </div>
     </div>
   );
 }
-
-    

@@ -53,7 +53,6 @@ export default function VoiceToTextGhanaNLPPage() {
     setPageError(null);
 
     const formData = new FormData();
-    // Use the blob's actual mime type to determine the file extension.
     const fileExtension = audioBlob.type.split('/')[1]?.split(';')[0] || 'webm';
     formData.append('file', audioBlob, `recording.${fileExtension}`);
 
@@ -62,8 +61,6 @@ export default function VoiceToTextGhanaNLPPage() {
       const response = await fetchGhanaNLP(apiUrl, {
         method: 'POST',
         body: formData,
-        // When using FormData, the browser sets the Content-Type header automatically with the correct boundary.
-        // We do not set it manually. The fetchGhanaNLP wrapper will add the subscription key.
       });
       const resultText = await response.text();
       setTranscribedText(resultText);
@@ -128,18 +125,15 @@ export default function VoiceToTextGhanaNLPPage() {
   const handleToggleRecording = () => { if (isRecording) stopRecordingProcess(); else startRecordingProcess(); };
 
   return (
-    <div className="flex flex-col gap-4 md:gap-6 max-w-2xl mx-auto">
+    <div className="flex flex-col gap-4 md:gap-6 max-w-3xl mx-auto">
       <div className="text-center">
         <h1 className="font-headline text-2xl sm:text-3xl md:text-4xl font-bold">Voice-to-Text</h1>
         <p className="text-muted-foreground mt-1 md:mt-2 text-sm sm:text-base">Record and transcribe Twi audio using GhanaNLP.</p>
       </div>
       {pageError && (<Alert variant="destructive" className="my-4 px-4 sm:px-6 py-3"><AlertTriangle className="h-4 w-4" /><AlertTitle>Error</AlertTitle><AlertDescription>{pageError}</AlertDescription></Alert>)}
       
-      <div className="p-4 sm:p-6 border rounded-lg bg-background shadow-sm space-y-4">
-        <h2 className="text-lg sm:text-xl font-semibold">Transcribe Audio</h2>
-        <p className="text-xs sm:text-sm text-muted-foreground -mt-3">Select language, then {isRecording ? "Stop" : "Start"} Recording.</p>
-        
-        <div className="flex flex-col sm:flex-row gap-4 items-center">
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
           <div className="w-full sm:w-auto">
             <Label htmlFor="language-select-vot" className="block mb-1 text-sm font-medium">Language</Label>
             <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
@@ -147,20 +141,26 @@ export default function VoiceToTextGhanaNLPPage() {
               <SelectContent> {supportedApiLanguages.map(lang => (<SelectItem key={lang.code} value={lang.code}>{lang.name}</SelectItem>))} </SelectContent>
             </Select>
           </div>
-          <Button onClick={handleToggleRecording} disabled={isLoadingTranscription || (!getApiKeyBasic() && !getApiKeyDev()) || (typeof window !== 'undefined' && (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia))} className={`w-full sm:flex-1 btn-animated ${isRecording ? 'bg-destructive hover:bg-destructive/90' : ''}`} aria-label={isRecording ? "Stop recording" : "Start recording"}>
-            {isRecording ? <StopCircle className="mr-2 h-5 w-5" /> : <Mic className="mr-2 h-5 w-5" />}
-            {isLoadingTranscription && isRecording ? 'Stopping...' : isRecording ? 'Stop Recording' : 'Start Recording'}
-            {isLoadingTranscription && !isRecording && <Loader2 className="ml-2 h-5 w-5 animate-spin" />}
+        </div>
+
+        <div className="flex justify-center">
+          <Button onClick={handleToggleRecording} disabled={isLoadingTranscription || (!getApiKeyBasic() && !getApiKeyDev()) || (typeof window !== 'undefined' && (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia))} className={`w-32 h-32 rounded-full flex flex-col items-center justify-center btn-animated ${isRecording ? 'bg-destructive hover:bg-destructive/90' : ''}`} aria-label={isRecording ? "Stop recording" : "Start recording"}>
+            {isRecording ? <StopCircle className="h-12 w-12 mb-1" /> : <Mic className="h-12 w-12 mb-1" />}
+            <span className="text-lg font-semibold">{isLoadingTranscription && isRecording ? 'Stopping...' : isRecording ? 'Stop' : 'Start'}</span>
           </Button>
         </div>
-        
-        {isLoadingTranscription && !isRecording && ( <div className="flex items-center justify-center p-4"><Loader2 className="h-8 w-8 animate-spin text-primary" /><p className="ml-2 text-muted-foreground">Transcribing...</p></div> )}
+
+        {isLoadingTranscription && !isRecording && ( <div className="flex items-center justify-center p-4"><Loader2 className="h-8 w-8 animate-spin text-primary" /><p className="ml-2 text-muted-foreground">Transcribing audio...</p></div> )}
         
         <div>
           <Label htmlFor="transcription-output-vot" className="block mb-2 text-sm font-medium">Transcription Output:</Label>
-          <ScrollArea className="h-[150px] sm:h-[200px] w-full rounded-md border">
-            <Textarea id="transcription-output-vot" placeholder={isRecording ? "Recording audio..." : transcribedText ? "" : "Transcription will appear here..."} value={transcribedText} readOnly className="min-h-[130px] sm:min-h-[180px] text-base bg-muted/30 border-none focus-visible:ring-0 focus-visible:ring-offset-0 resize-none p-3" aria-label="Transcription output" />
-          </ScrollArea>
+          <div className="p-4 rounded-lg bg-muted/30 min-h-[150px]">
+            <ScrollArea className="h-[150px] sm:h-[200px] w-full rounded-md">
+              <p id="transcription-output-vot" className="text-base whitespace-pre-wrap" aria-label="Transcription output">
+                {transcribedText || "Transcription will appear here..."}
+              </p>
+            </ScrollArea>
+          </div>
         </div>
       </div>
     </div>

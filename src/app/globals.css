@@ -8,97 +8,95 @@ body {
 
 @layer base {
   :root {
-    --background: 145 60% 96%; /* Very light UMaT green-tinted gray */
-    --foreground: 145 50% 10%; /* Very dark, almost black, UMaT green tint */
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
 
-    --card: 0 0% 100%; /* White card for better contrast */
-    --card-foreground: 145 50% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 145 50% 10%;
+    --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 145 63% 27%; /* UMaT Dark Green */
-    --primary-foreground: 0 0% 100%; /* White */
+    --primary: 142.1 76.2% 36.3%;
+    --primary-foreground: 355.7 100% 97.3%;
 
-    --secondary: 44 100% 50%; /* UMaT Yellow */
-    --secondary-foreground: 145 50% 10%; /* Dark text on yellow */
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
 
-    --muted: 145 30% 90%; /* Light muted green */
-    --muted-foreground: 145 25% 55%; /* Darker muted green */
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
 
-    --accent: 44 100% 50%; /* UMaT Yellow as accent */
-    --accent-foreground: 145 50% 10%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
 
-    --destructive: 0 72% 51%; /* UMaT Red */
-    --destructive-foreground: 0 0% 100%; /* White */
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 145 30% 80%; /* Light green border */
-    --input: 145 30% 88%; /* Slightly darker than muted for input bg */
-    --ring: 145 63% 37%; /* Slightly lighter primary for ring */
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 142.1 76.2% 36.3%;
 
-    --chart-1: 145 63% 27%;
-    --chart-2: 44 100% 50%;
-    --chart-3: 0 72% 51%;
-    --chart-4: 197 52% 60%;
-    --chart-5: 25 80% 55%;
-
+    --chart-1: 142.1 76.2% 36.3%;
+    --chart-2: 210 40% 96.1%;
+    --chart-3: 0 84.2% 60.2%;
+    --chart-4: 222.2 47.4% 11.2%;
+    --chart-5: 215.4 16.3% 46.9%;
+    
     --radius: 0.5rem;
 
-    /* Sidebar colors to match theme */
-    --sidebar-background: 145 60% 94%; /* Lighter variant of background */
-    --sidebar-foreground: 145 50% 10%;
-    --sidebar-primary: 145 63% 27%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 44 100% 50%;
-    --sidebar-accent-foreground: 145 50% 10%;
-    --sidebar-border: 145 30% 80%;
-    --sidebar-ring: 145 63% 37%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 222.2 84% 4.9%;
+    --sidebar-primary: 142.1 76.2% 36.3%;
+    --sidebar-primary-foreground: 355.7 100% 97.3%;
+    --sidebar-accent: 210 40% 96.1%;
+    --sidebar-accent-foreground: 222.2 47.4% 11.2%;
+    --sidebar-border: 214.3 31.8% 91.4%;
+    --sidebar-ring: 142.1 76.2% 36.3%;
   }
 
   .dark {
-    --background: 145 30% 8%; /* Dark UMaT Green (Deep Slate Green) */
-    --foreground: 145 15% 95%; /* Off-white with a hint of green */
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
 
-    --card: 145 30% 12%; /* Slightly lighter than background for depth */
-    --card-foreground: 145 15% 92%; /* Matching light text */
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
 
-    --popover: 145 30% 10%; /* Similar to card, slightly darker if needed */
-    --popover-foreground: 145 15% 95%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
 
-    --primary: 145 55% 50%; /* UMaT Green - vibrant for dark mode */
-    --primary-foreground: 0 0% 100%; /* White */
+    --primary: 142.1 70.6% 45.3%;
+    --primary-foreground: 355.7 100% 97.3%;
 
-    --secondary: 44 90% 55%; /* UMaT Yellow - slightly less intense for balance */
-    --secondary-foreground: 145 40% 10%; /* Dark green text on yellow */
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
 
-    --muted: 145 25% 20%; /* Darker, subtle green-gray */
-    --muted-foreground: 145 20% 65%; /* Lighter muted text */
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
 
-    --accent: 44 95% 58%; /* UMaT Yellow - for accents, slightly brighter than secondary */
-    --accent-foreground: 145 40% 10%; /* Dark green text on accent */
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
 
-    --destructive: 0 70% 60%; /* UMaT Red - clear and visible */
-    --destructive-foreground: 0 0% 100%; /* White */
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 145 25% 25%; /* Subtle border, darker than card */
-    --input: 145 25% 18%; /* Dark input background */
-    --ring: 145 55% 60%; /* Brighter primary for focus rings */
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 142.1 70.6% 45.3%;
 
-    --chart-1: 145 55% 50%;
-    --chart-2: 44 90% 55%;
-    --chart-3: 0 70% 60%;
-    --chart-4: 197 50% 65%;
-    --chart-5: 25 85% 60%;
+    --chart-1: 142.1 70.6% 45.3%;
+    --chart-2: 217.2 32.6% 17.5%;
+    --chart-3: 0 62.8% 30.6%;
+    --chart-4: 210 40% 98%;
+    --chart-5: 215 20.2% 65.1%;
     
-    /* Sidebar colors for dark mode */
-    --sidebar-background: 145 30% 10%; /* Slightly different from main bg for separation */
-    --sidebar-foreground: 145 15% 95%;
-    --sidebar-primary: 145 55% 50%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 44 95% 58%;
-    --sidebar-accent-foreground: 145 40% 10%;
-    --sidebar-border: 145 25% 22%;
-    --sidebar-ring: 145 55% 60%;
+    --sidebar-background: 222.2 84% 4.9%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 142.1 70.6% 45.3%;
+    --sidebar-primary-foreground: 355.7 100% 97.3%;
+    --sidebar-accent: 217.2 32.6% 17.5%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 217.2 32.6% 17.5%;
+    --sidebar-ring: 142.1 70.6% 45.3%;
   }
 }
 

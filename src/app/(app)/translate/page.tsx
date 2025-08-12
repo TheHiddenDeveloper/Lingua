@@ -113,53 +113,54 @@ export default function TranslatePage() {
         <h1 className="font-headline text-2xl sm:text-3xl md:text-4xl font-bold">Polyglot Translator</h1>
         <p className="text-muted-foreground mt-1 md:mt-2 text-sm sm:text-base">Translate between English and Ghanaian languages.</p>
       </div>
-      {translationPageError && ( <Alert variant="destructive" className="my-4"><AlertTriangle className="h-4 w-4" /><AlertTitle>Translation Error</AlertTitle><AlertDescription>{translationPageError}</AlertDescription></Alert> )}
 
+      {translationPageError && ( <Alert variant="destructive" className="my-4"><AlertTriangle className="h-4 w-4" /><AlertTitle>Translation Error</AlertTitle><AlertDescription>{translationPageError}</AlertDescription></Alert> )}
+      
       <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4">
-        <div className="w-full sm:w-auto">
-          <Label htmlFor="source-lang-select" className="sr-only">Translate from</Label>
+        <div className="w-full sm:w-auto flex-1">
           <Select value={sourceLang} onValueChange={setSourceLang}>
-            <SelectTrigger id="source-lang-select" className="w-full sm:w-[200px]"><SelectValue placeholder="Translate from" /></SelectTrigger>
+            <SelectTrigger id="source-lang-select" className="w-full"><SelectValue placeholder="Translate from" /></SelectTrigger>
             <SelectContent>{supportedLanguages.map(lang => (<SelectItem key={`src-${lang.code}`} value={lang.code}>{lang.name}</SelectItem>))}</SelectContent>
           </Select>
         </div>
         <Button onClick={handleSwapLanguages} variant="ghost" size="icon" className="btn-animated my-1 sm:my-0" aria-label="Swap languages"><ArrowRightLeft className="h-5 w-5 text-primary" /></Button>
-        <div className="w-full sm:w-auto">
-           <Label htmlFor="target-lang-select" className="sr-only">Translate to</Label>
-          <Select value={targetLang} onValueChange={setTargetLang}>
-            <SelectTrigger id="target-lang-select" className="w-full sm:w-[200px]"><SelectValue placeholder="Translate to" /></SelectTrigger>
+        <div className="w-full sm:w-auto flex-1">
+           <Select value={targetLang} onValueChange={setTargetLang}>
+            <SelectTrigger id="target-lang-select" className="w-full"><SelectValue placeholder="Translate to" /></SelectTrigger>
             <SelectContent>{supportedLanguages.map(lang => (<SelectItem key={`tgt-${lang.code}`} value={lang.code}>{lang.name}</SelectItem>))}</SelectContent>
           </Select>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 items-start">
-        <div className="border rounded-lg p-4 sm:p-6 bg-background shadow-sm flex flex-col gap-2">
+        <div className="rounded-lg bg-background flex flex-col gap-2">
           <Label htmlFor="input-text-area" className="text-base sm:text-lg font-medium">{supportedLanguages.find(l => l.code === sourceLang)?.name || 'Source'}</Label>
-          <Textarea id="input-text-area" placeholder="Enter text to translate (max 1000 chars)..." value={inputText} onChange={(e) => setInputText(e.target.value)} className="min-h-[150px] sm:min-h-[200px] text-base resize-none flex-grow" aria-label="Input text for translation" maxLength={1000}/>
+          <Textarea id="input-text-area" placeholder="Enter text to translate (max 1000 chars)..." value={inputText} onChange={(e) => setInputText(e.target.value)} className="min-h-[150px] sm:min-h-[200px] text-base resize-y flex-grow" aria-label="Input text for translation" maxLength={1000}/>
           <div className="flex justify-between items-center mt-1">
             <Button variant="ghost" size="icon" onClick={toggleVoiceInput} disabled={!browserSupportsSpeechRecognition} aria-label={isListening ? "Stop voice input" : "Start voice input"}><Mic className={`h-5 w-5 ${isListening ? 'text-destructive animate-pulse' : ''}`} /></Button>
             <Button variant="ghost" size="icon" onClick={handleCopyInput} disabled={!inputText.trim()} aria-label="Copy input text"><Copy className="h-5 w-5" /></Button>
           </div>
-          {!browserSupportsSpeechRecognition && <p className="text-xs text-muted-foreground mt-1 text-center">Voice input not supported by browser.</p>}
         </div>
 
-        <div className="border rounded-lg p-4 sm:p-6 bg-muted/30 shadow-sm flex flex-col gap-2">
-          <Label htmlFor="output-text-area" className="text-base sm:text-lg font-medium">{supportedLanguages.find(l => l.code === targetLang)?.name || 'Translation'}</Label>
-          <Textarea id="output-text-area" placeholder="Translation will appear here..." value={outputText} readOnly className="min-h-[150px] sm:min-h-[200px] bg-transparent text-base resize-none flex-grow" aria-label="Translated text output"/>
-          <div className="flex justify-between items-center mt-1">
+        <div className="rounded-lg bg-muted/20 flex flex-col gap-2">
+          <Label htmlFor="output-text-area" className="text-base sm:text-lg font-medium p-4 pb-0">{supportedLanguages.find(l => l.code === targetLang)?.name || 'Translation'}</Label>
+           <div className="p-4 pt-2 flex-grow">
+            <ScrollArea className="h-[150px] sm:h-[200px] w-full rounded-md">
+                <p id="output-text-area" className="text-base whitespace-pre-wrap p-2 min-h-[150px] sm:min-h-[200px] " aria-label="Translated text output">{outputText || 'Translation will appear here...'}</p>
+            </ScrollArea>
+           </div>
+          <div className="flex justify-between items-center mt-1 border-t p-2">
             <Button variant="ghost" size="icon" onClick={handleSpeakOutput} disabled={!browserSupportsTextToSpeech || !outputText.trim()} aria-label={isSpeaking ? "Stop speaking" : "Speak translated text"}><Volume2 className={`h-5 w-5 ${isSpeaking ? 'text-destructive animate-pulse' : ''}`} /></Button>
             <div className="flex gap-2">
               <Button variant="ghost" size="icon" onClick={handleCopyOutput} disabled={!outputText.trim()} aria-label="Copy translated text"><Copy className="h-5 w-5" /></Button>
               <Button variant="outline" size="sm" onClick={handleSummarize} disabled={isLoadingSummary || !outputText.trim()} className="btn-animated">
-                {isLoadingSummary ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <FileText className="mr-1 h-4 w-4" />} Summarize
+                {isLoadingSummary ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <FileText className="mr-1 h-4 w-4" />} AI Summary
               </Button>
             </div>
           </div>
-          {!browserSupportsTextToSpeech && <p className="text-xs text-muted-foreground mt-1 text-center">Text-to-speech not supported by browser.</p>}
         </div>
       </div>
-
+      
       <div className="flex justify-center mt-2 md:mt-4">
         <Button onClick={handleTranslate} disabled={isLoadingTranslation || !inputText.trim()} size="lg" className="w-full sm:w-auto min-w-[180px] btn-animated">
           {isLoadingTranslation ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <ArrowRightLeft className="mr-2 h-5 w-5" />} Translate
@@ -169,9 +170,9 @@ export default function TranslatePage() {
       {aiError && ( <Alert variant="destructive" className="mt-4 md:mt-6"><AlertTriangle className="h-4 w-4" /><AlertTitle>AI Summarization Error</AlertTitle><AlertDescription>{aiError}</AlertDescription></Alert> )}
 
       {summary && (
-        <div className="mt-4 md:mt-6 border rounded-lg p-4 sm:p-6 bg-background shadow-sm">
+        <div className="mt-4 md:mt-6 rounded-lg p-4 sm:p-6 bg-muted/20">
           <h2 className="font-headline text-lg sm:text-xl mb-2">Translation Summary</h2>
-          <ScrollArea className="h-[100px] sm:h-[150px] w-full rounded-md border p-3 sm:p-4 bg-muted/20">
+          <ScrollArea className="h-[100px] sm:h-[150px] w-full rounded-md border p-3 sm:p-4 bg-background">
             <p className="text-sm whitespace-pre-wrap">{summary}</p>
           </ScrollArea>
         </div>
