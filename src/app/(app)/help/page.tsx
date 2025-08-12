@@ -2,10 +2,8 @@
 'use client';
 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Languages, Mic, Volume2, History, FileText, Mail, HelpCircle } from 'lucide-react';
-import Link from 'next/link';
 
 export default function HelpPage() {
   const helpContent = {
@@ -98,7 +96,7 @@ export default function HelpPage() {
         faqs: [
           {
             q: 'How can I view my activity history?',
-            a: 'Click on the "History" link in the sidebar. You can then switch between tabs for Translations, Summaries, Voice-to-Text, and Text-to-Speech activities.',
+            a: 'Click on the "History" link in the header. You can then switch between tabs for Translations, Summaries, Voice-to-Text, and Text-to-Speech activities.',
           },
           {
             q: 'Is my history private?',
@@ -114,65 +112,51 @@ export default function HelpPage() {
   };
 
   return (
-    <div className="container mx-auto p-4 md:p-6 flex flex-col gap-4 md:gap-6">
-      <div className="text-center md:text-left mb-4 md:mb-6">
-        <h1 className="font-headline text-2xl sm:text-3xl md:text-4xl font-bold flex items-center justify-center md:justify-start">
-          <HelpCircle className="w-7 h-7 sm:w-8 sm:h-8 mr-2 sm:mr-3 text-primary" />
+    <div className="container mx-auto max-w-4xl p-4 md:p-6 space-y-8 md:space-y-12">
+      <header className="text-center">
+        <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold flex items-center justify-center gap-3">
+          <HelpCircle className="w-8 h-8 sm:w-10 sm:h-10 text-primary" />
           {helpContent.title}
         </h1>
-        <p className="text-muted-foreground mt-1 md:mt-2 text-sm sm:text-base">{helpContent.description}</p>
-      </div>
+        <p className="text-muted-foreground mt-2 text-base sm:text-lg">{helpContent.description}</p>
+      </header>
 
       {helpContent.sections.map((section) => (
-        <Card key={section.id} id={section.id} className="card-animated">
-          <CardHeader className="px-4 sm:px-6 pt-4 pb-2">
-            <CardTitle className="flex items-center text-lg sm:text-xl md:text-2xl">
-              <section.icon className="w-5 h-5 sm:w-6 sm:h-6 mr-2 sm:mr-3 text-primary" />
-              {section.title}
-            </CardTitle>
-            <CardDescription className="text-xs sm:text-sm">{section.description}</CardDescription>
-          </CardHeader>
-          <CardContent className="px-4 sm:px-6 pb-4">
-            <Accordion type="single" collapsible className="w-full">
-              {section.faqs.map((faq, index) => (
-                <AccordionItem value={`${section.id}-item-${index}`} key={index}>
-                  <AccordionTrigger className="text-left hover:no-underline text-sm md:text-base py-3">
-                    {faq.q}
-                  </AccordionTrigger>
-                  <AccordionContent className="text-muted-foreground text-xs md:text-sm whitespace-pre-line pt-1 pb-3">
-                    {faq.a}
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
-          </CardContent>
-        </Card>
+        <section key={section.id} id={section.id} className="p-6 rounded-lg border bg-muted/20">
+          <h2 className="text-2xl font-bold flex items-center mb-4">
+            <section.icon className="w-7 h-7 mr-3 text-primary" />
+            {section.title}
+          </h2>
+          <p className="text-muted-foreground mb-4">{section.description}</p>
+          <Accordion type="single" collapsible className="w-full">
+            {section.faqs.map((faq, index) => (
+              <AccordionItem value={`${section.id}-item-${index}`} key={index}>
+                <AccordionTrigger className="text-left hover:no-underline text-base py-3">
+                  {faq.q}
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground text-sm whitespace-pre-line pt-1 pb-3">
+                  {faq.a}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        </section>
       ))}
 
-      <Card id="contact" className="card-animated mt-2">
-        <CardHeader className="px-4 sm:px-6 pt-4 pb-2">
-          <CardTitle className="flex items-center text-lg sm:text-xl md:text-2xl">
-            <Mail className="w-5 h-5 sm:w-6 sm:h-6 mr-2 sm:mr-3 text-primary" />
-            Contact & Feedback
-          </CardTitle>
-          <CardDescription className="text-xs sm:text-sm">
-            Have questions not answered here, or want to report an issue?
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="px-4 sm:px-6 pb-4">
-          <p className="text-sm text-muted-foreground mb-4">
-            We value your feedback! If you encounter any problems, have suggestions, or need further assistance, please don&apos;t hesitate to reach out.
-          </p>
-          <Button asChild className="btn-animated w-full sm:w-auto">
-            <a href={`mailto:${helpContent.contactEmail}?subject=Polyglot%20Feedback`}>
-              <Mail className="mr-2 h-4 w-4" /> Email Support
-            </a>
-          </Button>
-          <p className="text-xs text-muted-foreground mt-2">
-            We typically respond within 1-2 business days.
-          </p>
-        </CardContent>
-      </Card>
+      <section id="contact" className="text-center p-6 rounded-lg border bg-muted/20">
+        <h2 className="text-2xl font-bold flex items-center justify-center mb-4">
+            <Mail className="w-7 h-7 mr-3 text-primary" />
+            Still Need Help?
+        </h2>
+        <p className="text-muted-foreground mb-4 max-w-2xl mx-auto">
+          If you couldn't find your answer, please don't hesitate to reach out to our support team.
+        </p>
+        <Button asChild className="btn-animated">
+          <a href={`mailto:${helpContent.contactEmail}?subject=Polyglot%20Feedback`}>
+            <Mail className="mr-2 h-4 w-4" /> Email Support
+          </a>
+        </Button>
+      </section>
     </div>
   );
 }

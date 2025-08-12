@@ -152,20 +152,16 @@ export const GhanaNLPProvider = ({ children }: { children: ReactNode }) => {
       setInitialDataError(null);
 
       try {
-        // fetchGhanaNLP internally handles trying dev key first, then basic on 403.
-        // The isRetryCall parameter within fetchGhanaNLP is used internally for its own retry.
-        // For loadInitialData, we just call it once. If it fails after its internal retry, the error propagates.
         const langResponse = await fetchGhanaNLP('https://translation-api.ghananlp.org/tts/v1/languages', {});
         const langData = await langResponse.json();
         
-        // Use the same key logic for speakers call; fetchGhanaNLP state (activeKey, devKeyHasFailed) will be current.
         const speakerResponse = await fetchGhanaNLP('https://translation-api.ghananlp.org/tts/v1/speakers', {});
         const speakerData = await speakerResponse.json();
 
-        const apiLangObject = langData.languages;
-        const supportedApiLangCodes = apiLangObject && typeof apiLangObject === 'object' ? Object.keys(apiLangObject) : []; // e.g., ['tw', 'ki', 'ee']
-        
-        // Filter PRD languages based on what the API actually supports (using apiName for matching)
+        // FIX: The API returns an array of language objects, not an object of objects.
+        const apiLanguages = langData.languages || [];
+        const supportedApiLangCodes = Array.isArray(apiLanguages) ? apiLanguages.map((lang: any) => lang.code) : [];
+
         const filteredAppLanguages = PRD_LANGUAGES_SUPPORTED_BY_TTS.filter(prdLang => 
           supportedApiLangCodes.includes(prdLang.apiName)
         );
@@ -174,37 +170,31 @@ export const GhanaNLPProvider = ({ children }: { children: ReactNode }) => {
         if (filteredAppLanguages.length === 0 && PRD_LANGUAGES_SUPPORTED_BY_TTS.length > 0) {
             const prdLangNames = PRD_LANGUAGES_SUPPORTED_BY_TTS.map(l => l.name).join('/');
             const apiLangsString = supportedApiLangCodes.length > 0 ? supportedApiLangCodes.join(', ') : 'none reported by API';
-            // This error message will now reflect the lowercase apiName if needed.
             const langErrorMessage = `App requires ${prdLangNames} for TTS. API reported supporting: [${apiLangsString}]. Check key validity/permissions or language codes. Ensure 'apiName' in PRD_LANGUAGES_SUPPORTED_BY_TTS matches API codes.`;
             setInitialDataError(langErrorMessage);
             toast({ title: 'Language Config Issue', description: langErrorMessage, variant: 'warning', duration: 10000 });
         }
         
-        // The speakers API returns keys like "Twi", "Ewe". We need to match them with our app's `apiName` ('tw', 'ee').
         const transformedSpeakers: ApiSpeakersData = {};
         if (speakerData.speakers && typeof speakerData.speakers === 'object') {
-            for (const langApiNameFromSpeakersKey of Object.keys(speakerData.speakers)) { // e.g., "Twi", "Ewe"
-                // Find our app's language definition that matches this API speaker key (case-insensitive for robustness)
+            for (const langApiNameFromSpeakersKey of Object.keys(speakerData.speakers)) {
                 const appLangDef = PRD_LANGUAGES_SUPPORTED_BY_TTS.find(
                     l => l.name.toLowerCase() === langApiNameFromSpeakersKey.toLowerCase() || 
                          l.apiName.toLowerCase() === langApiNameFromSpeakersKey.toLowerCase()
                 );
                 if (appLangDef) {
-                    // Use the app's internal `apiName` (e.g., 'tw') as the key for our speakers object
                     transformedSpeakers[appLangDef.apiName] = speakerData.speakers[langApiNameFromSpeakersKey];
                 }
             }
         }
         setSpeakers(transformedSpeakers);
 
-
       } catch (err: any) {
-        if ((err as any).noKeys) { // Check for custom flag
-             setInitialDataError(err.message); // Already specific enough
+        if ((err as any).noKeys) {
+             setInitialDataError(err.message);
         } else {
             setInitialDataError(err.message || "Failed to load initial TTS options (languages/speakers).");
         }
-        // Avoid double toast if fetchGhanaNLP already showed one for key switch or specific 403
         if (!err.message?.includes("Access Forbidden") && !err.message?.includes("Switched to basic API key")) {
              toast({ title: 'API Error', description: `Could not load initial TTS options: ${err.message}`, variant: 'destructive' });
         }
@@ -215,8 +205,7 @@ export const GhanaNLPProvider = ({ children }: { children: ReactNode }) => {
 
     loadInitialData();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [apiKeyDev, apiKeyBasic, toast]); // Re-run if keys change (though they are from .env)
-                                       // fetchGhanaNLP is memoized with its own dependencies
+  }, [apiKeyDev, apiKeyBasic, toast]);
 
   const getApiKeyDev = () => apiKeyDev;
   const getApiKeyBasic = () => apiKeyBasic;
@@ -235,4 +224,3 @@ export const useGhanaNLP = (): GhanaNLPContextType => {
   }
   return context;
 };
-

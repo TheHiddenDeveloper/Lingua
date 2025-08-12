@@ -1,18 +1,16 @@
 
 'use client';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/contexts/AuthContext';
 import { useState, type FormEvent, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useTextSize } from '@/contexts/TextSizeContext';
 import { useTheme } from '@/contexts/ThemeContext';
-import { Loader2, User, Palette, Accessibility } from 'lucide-react';
+import { Loader2, User, Palette, Accessibility, Settings } from 'lucide-react';
 
 export default function SettingsPage() {
   const { user, updateUserProfile, sendPasswordReset, loading: authLoading } = useAuth();
@@ -52,97 +50,92 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="container mx-auto p-4 md:p-6 flex flex-col gap-4 md:gap-6">
-      <div className="text-center md:text-left mb-4 md:mb-6">
-        <h1 className="font-headline text-2xl sm:text-3xl md:text-4xl font-bold">Settings</h1>
-        <p className="text-muted-foreground mt-1 md:mt-2 text-sm sm:text-base">Manage your account and application preferences.</p>
-      </div>
+    <div className="container mx-auto max-w-4xl p-4 md:p-6 space-y-8 md:space-y-12">
+      <header className="text-center">
+        <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold flex items-center justify-center gap-3">
+          <Settings className="w-8 h-8 sm:w-10 sm:h-10 text-primary" />
+          Settings
+        </h1>
+        <p className="text-muted-foreground mt-2 text-base sm:text-lg">
+          Manage your account and application preferences.
+        </p>
+      </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 items-start">
-        <div className="md:col-span-1 md:sticky md:top-20 hidden md:block">
-          <Card className="card-animated">
-            <CardHeader><CardTitle className="text-lg">Navigation</CardTitle></CardHeader>
-            <CardContent className="space-y-1">
-              <Button variant="ghost" className="w-full justify-start text-sm" onClick={() => document.getElementById('profile')?.scrollIntoView({ behavior: 'smooth' })}><User className="mr-2 h-4 w-4" />Profile</Button>
-              <Button variant="ghost" className="w-full justify-start text-sm" onClick={() => document.getElementById('appearance')?.scrollIntoView({ behavior: 'smooth' })}><Palette className="mr-2 h-4 w-4" />Appearance</Button>
-              <Button variant="ghost" className="w-full justify-start text-sm" onClick={() => document.getElementById('accessibility')?.scrollIntoView({ behavior: 'smooth' })}><Accessibility className="mr-2 h-4 w-4" />Accessibility</Button>
-            </CardContent>
-          </Card>
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
+        {/* Left-side Navigation (for Desktop) */}
+        <nav className="hidden md:block md:sticky md:top-24">
+          <ul className="space-y-2">
+            <li><Button variant="ghost" className="w-full justify-start text-base" onClick={() => document.getElementById('profile')?.scrollIntoView({ behavior: 'smooth' })}><User className="mr-3 h-5 w-5" />Profile</Button></li>
+            <li><Button variant="ghost" className="w-full justify-start text-base" onClick={() => document.getElementById('appearance')?.scrollIntoView({ behavior: 'smooth' })}><Palette className="mr-3 h-5 w-5" />Appearance</Button></li>
+            <li><Button variant="ghost" className="w-full justify-start text-base" onClick={() => document.getElementById('accessibility')?.scrollIntoView({ behavior: 'smooth' })}><Accessibility className="mr-3 h-5 w-5" />Accessibility</Button></li>
+          </ul>
+        </nav>
 
-        <div className="md:col-span-2 space-y-6 md:space-y-8">
-          <Card id="profile" className="card-animated">
-            <CardHeader className="px-4 sm:px-6 pt-4 pb-2">
-              <CardTitle className="text-lg sm:text-xl">Profile</CardTitle>
-              <CardDescription className="text-xs sm:text-sm">Manage your personal information.</CardDescription>
-            </CardHeader>
-            <CardContent className="px-4 sm:px-6 pb-4">
-              <form onSubmit={handleProfileUpdate} className="space-y-6">
-                <div className="space-y-2">
-                  <Label htmlFor="displayName">Display Name</Label>
-                  <Input id="displayName" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Your Name" disabled={authLoading} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input id="email" type="email" value={email} readOnly disabled />
-                </div>
-                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-                  <Button type="submit" disabled={authLoading} className="w-full sm:w-auto btn-animated">
-                    {authLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Save Changes
-                  </Button>
-                  <Button type="button" variant="outline" onClick={handlePasswordChange} disabled={authLoading} className="w-full sm:w-auto btn-animated">
-                     {authLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Change Password
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-
-          <Separator className="md:hidden my-4" /> 
-
-          <Card id="appearance" className="card-animated">
-            <CardHeader className="px-4 sm:px-6 pt-4 pb-2">
-              <CardTitle className="text-lg sm:text-xl">Appearance</CardTitle>
-              <CardDescription className="text-xs sm:text-sm">Customize the look and feel.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4 px-4 sm:px-6 pb-4">
+        {/* Right-side Content */}
+        <div className="md:col-span-2 space-y-10">
+          <section id="profile" className="p-6 rounded-lg border bg-muted/20">
+            <h2 className="text-2xl font-bold flex items-center mb-4">
+              <User className="w-7 h-7 mr-3 text-primary" />
+              Profile
+            </h2>
+            <p className="text-muted-foreground mb-6">Manage your personal information and security.</p>
+            <form onSubmit={handleProfileUpdate} className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="theme-settings" className="text-sm font-medium">Theme</Label>
-                <Select value={theme} onValueChange={handleThemeChange}>
-                  <SelectTrigger id="theme-settings" className="w-full sm:w-[200px]"><SelectValue placeholder="Select theme" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="light">Light</SelectItem>
-                    <SelectItem value="dark">Dark</SelectItem>
-                    <SelectItem value="system">System</SelectItem>
-                  </SelectContent>
-                </Select>
-                <p className="text-xs sm:text-sm text-muted-foreground">Choose your preferred theme.</p>
+                <Label htmlFor="displayName" className="text-base">Display Name</Label>
+                <Input id="displayName" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Your Name" disabled={authLoading} className="text-base"/>
               </div>
-            </CardContent>
-          </Card>
-
-          <Separator className="md:hidden my-4" />
-
-          <Card id="accessibility" className="card-animated">
-            <CardHeader className="px-4 sm:px-6 pt-4 pb-2">
-              <CardTitle className="text-lg sm:text-xl">Accessibility</CardTitle>
-              <CardDescription className="text-xs sm:text-sm">Adjust for better accessibility.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4 px-4 sm:px-6 pb-4">
-               <div className="space-y-2">
-                <Label htmlFor="text-size-settings" className="text-sm font-medium">Text Size</Label>
-                 <Select value={textSize} onValueChange={(value) => setTextSize(value as 'text-size-sm' | 'text-size-md' | 'text-size-lg')}>
-                  <SelectTrigger id="text-size-settings" className="w-full sm:w-[200px]"><SelectValue placeholder="Select text size" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="text-size-sm">Small</SelectItem>
-                    <SelectItem value="text-size-md">Medium (Default)</SelectItem>
-                    <SelectItem value="text-size-lg">Large</SelectItem>
-                  </SelectContent>
-                </Select>
-                <p className="text-xs sm:text-sm text-muted-foreground">Adjust application-wide text size.</p>
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-base">Email</Label>
+                <Input id="email" type="email" value={email} readOnly disabled className="text-base"/>
               </div>
-            </CardContent>
-          </Card>
+              <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                <Button type="submit" disabled={authLoading} className="btn-animated w-full sm:w-auto">
+                  {authLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null} Save Changes
+                </Button>
+                <Button type="button" variant="outline" onClick={handlePasswordChange} disabled={authLoading} className="btn-animated w-full sm:w-auto">
+                   {authLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null} Change Password
+                </Button>
+              </div>
+            </form>
+          </section>
+
+          <section id="appearance" className="p-6 rounded-lg border bg-muted/20">
+            <h2 className="text-2xl font-bold flex items-center mb-4">
+              <Palette className="w-7 h-7 mr-3 text-primary" />
+              Appearance
+            </h2>
+            <p className="text-muted-foreground mb-6">Customize the look and feel of the application.</p>
+            <div className="space-y-2">
+              <Label htmlFor="theme-settings" className="text-base">Theme</Label>
+              <Select value={theme} onValueChange={handleThemeChange}>
+                <SelectTrigger id="theme-settings" className="w-full sm:w-[240px] text-base"><SelectValue placeholder="Select theme" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="light">Light</SelectItem>
+                  <SelectItem value="dark">Dark</SelectItem>
+                  <SelectItem value="system">System</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </section>
+
+          <section id="accessibility" className="p-6 rounded-lg border bg-muted/20">
+            <h2 className="text-2xl font-bold flex items-center mb-4">
+              <Accessibility className="w-7 h-7 mr-3 text-primary" />
+              Accessibility
+            </h2>
+            <p className="text-muted-foreground mb-6">Adjust settings for better usability.</p>
+            <div className="space-y-2">
+              <Label htmlFor="text-size-settings" className="text-base">Text Size</Label>
+               <Select value={textSize} onValueChange={(value) => setTextSize(value as 'text-size-sm' | 'text-size-md' | 'text-size-lg')}>
+                <SelectTrigger id="text-size-settings" className="w-full sm:w-[240px] text-base"><SelectValue placeholder="Select text size" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="text-size-sm">Small</SelectItem>
+                  <SelectItem value="text-size-md">Medium (Default)</SelectItem>
+                  <SelectItem value="text-size-lg">Large</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </section>
         </div>
       </div>
     </div>
