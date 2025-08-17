@@ -158,9 +158,9 @@ export const GhanaNLPProvider = ({ children }: { children: ReactNode }) => {
         const speakerResponse = await fetchGhanaNLP('https://translation-api.ghananlp.org/tts/v1/speakers', {});
         const speakerData = await speakerResponse.json();
 
-        // FIX: The API returns an array of language objects, not an object of objects.
+        // FIX: The API returns an array of language objects. Make parsing more robust.
         const apiLanguages = langData.languages || [];
-        const supportedApiLangCodes = Array.isArray(apiLanguages) ? apiLanguages.map((lang: any) => lang.code) : [];
+        const supportedApiLangCodes = Array.isArray(apiLanguages) ? apiLanguages.map((lang: any) => lang.code || lang.name || lang.language).filter(Boolean) : [];
 
         const filteredAppLanguages = PRD_LANGUAGES_SUPPORTED_BY_TTS.filter(prdLang => 
           supportedApiLangCodes.includes(prdLang.apiName)
