@@ -151,16 +151,22 @@ export const GhanaNLPProvider = ({ children }: { children: ReactNode }) => {
       setIsLoadingInitialData(true);
       setInitialDataError(null);
 
+      let langData: any = null;
+      let speakerData: any = null;
+
       try {
         const langResponse = await fetchGhanaNLP('https://translation-api.ghananlp.org/tts/v1/languages', {});
-        const langData = await langResponse.json();
+        langData = await langResponse.json();
         
         const speakerResponse = await fetchGhanaNLP('https://translation-api.ghananlp.org/tts/v1/speakers', {});
-        const speakerData = await speakerResponse.json();
+        speakerData = await speakerResponse.json();
 
-        // FIX: The API returns an array of language objects. Make parsing more robust.
-        const apiLanguages = langData.languages || [];
-        const supportedApiLangCodes = Array.isArray(apiLanguages) ? apiLanguages.map((lang: any) => lang.code || lang.name || lang.language).filter(Boolean) : [];
+        // The API might return the languages array directly, or nested under a key. Check both.
+        const apiLanguages = langData.languages || (Array.isArray(langData) ? langData : []);
+
+        const supportedApiLangCodes = Array.isArray(apiLanguages) 
+          ? apiLanguages.map((lang: any) => lang.code || lang.name || lang.language).filter(Boolean) 
+          : [];
 
         const filteredAppLanguages = PRD_LANGUAGES_SUPPORTED_BY_TTS.filter(prdLang => 
           supportedApiLangCodes.includes(prdLang.apiName)
@@ -169,21 +175,30 @@ export const GhanaNLPProvider = ({ children }: { children: ReactNode }) => {
 
         if (filteredAppLanguages.length === 0 && PRD_LANGUAGES_SUPPORTED_BY_TTS.length > 0) {
             const prdLangNames = PRD_LANGUAGES_SUPPORTED_BY_TTS.map(l => l.name).join('/');
-            const apiLangsString = supportedApiLangCodes.length > 0 ? supportedApiLangCodes.join(', ') : 'none reported by API';
-            const langErrorMessage = `App requires ${prdLangNames} for TTS. API reported supporting: [${apiLangsString}]. Check key validity/permissions or language codes. Ensure 'apiName' in PRD_LANGUAGES_SUPPORTED_BY_TTS matches API codes.`;
+            // Create a detailed error message with the raw API response for debugging.
+            const rawLangDataString = JSON.stringify(langData, null, 2);
+            const langErrorMessage = `App requires ${prdLangNames} for TTS, but no supported languages were found from the API. This is likely an issue with the API key or response format. Raw API language data: \n${rawLangDataString}`;
             setInitialDataError(langErrorMessage);
-            toast({ title: 'Language Config Issue', description: langErrorMessage, variant: 'warning', duration: 10000 });
+            toast({ title: 'Language Config Issue', description: 'Could not find supported TTS languages. Check console for details.', variant: 'warning', duration: 10000 });
         }
         
+        // Make speaker parsing more robust
         const transformedSpeakers: ApiSpeakersData = {};
-        if (speakerData.speakers && typeof speakerData.speakers === 'object') {
-            for (const langApiNameFromSpeakersKey of Object.keys(speakerData.speakers)) {
+        const rawSpeakers = speakerData.speakers || (typeof speakerData === 'object' && speakerData !== null ? speakerData : {});
+
+        if (typeof rawSpeakers === 'object') {
+            for (const langApiName of Object.keys(rawSpeakers)) {
+                // Find the corresponding language definition in our app's config
                 const appLangDef = PRD_LANGUAGES_SUPPORTED_BY_TTS.find(
-                    l => l.name.toLowerCase() === langApiNameFromSpeakersKey.toLowerCase() || 
-                         l.apiName.toLowerCase() === langApiNameFromSpeakersKey.toLowerCase()
+                    l => l.name.toLowerCase() === langApiName.toLowerCase() || 
+                         l.apiName.toLowerCase() === langApiName.toLowerCase()
                 );
                 if (appLangDef) {
-                    transformedSpeakers[appLangDef.apiName] = speakerData.speakers[langApiNameFromSpeakersKey];
+                    // Ensure the value is an array of strings before assigning
+                    const speakerList = rawSpeakers[langApiName];
+                    if (Array.isArray(speakerList) && speakerList.every(s => typeof s === 'string')) {
+                         transformedSpeakers[appLangDef.apiName] = speakerList;
+                    }
                 }
             }
         }
@@ -193,10 +208,11 @@ export const GhanaNLPProvider = ({ children }: { children: ReactNode }) => {
         if ((err as any).noKeys) {
              setInitialDataError(err.message);
         } else {
-            setInitialDataError(err.message || "Failed to load initial TTS options (languages/speakers).");
+            const rawDataForError = `\n--- Raw Language Data ---\n${JSON.stringify(langData, null, 2)}\n--- Raw Speaker Data ---\n${JSON.stringify(speakerData, null, 2)}`;
+            setInitialDataError((err.message || "Failed to load initial TTS options.") + rawDataForError);
         }
         if (!err.message?.includes("Access Forbidden") && !err.message?.includes("Switched to basic API key")) {
-             toast({ title: 'API Error', description: `Could not load initial TTS options: ${err.message}`, variant: 'destructive' });
+             toast({ title: 'API Error', description: `Could not load initial TTS options. Check console for details.`, variant: 'destructive' });
         }
       } finally {
         setIsLoadingInitialData(false);
