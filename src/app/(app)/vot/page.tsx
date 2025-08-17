@@ -3,7 +3,6 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Mic, Loader2, AlertTriangle, StopCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -53,7 +52,7 @@ export default function VoiceToTextGhanaNLPPage() {
     setPageError(null);
 
     const formData = new FormData();
-    const fileExtension = audioBlob.type.split('/')[1]?.split(';')[0] || 'webm';
+    const fileExtension = mimeType.split('/')[1]?.split(';')[0] || 'webm';
     formData.append('file', audioBlob, `recording.${fileExtension}`);
 
     const apiUrl = `https://translation-api.ghananlp.org/asr/v1/transcribe?language=${selectedLanguage}`;
@@ -108,8 +107,8 @@ export default function VoiceToTextGhanaNLPPage() {
           audioStreamRef.current = null; 
         } 
         if (audioBlob.size === 0) { 
-          setPageError("No audio recorded."); 
-          toast({ title: "Recording Error", description: "No audio captured.", variant: "destructive" }); 
+          setPageError("No audio recorded. Please ensure your microphone is working and try again."); 
+          toast({ title: "Recording Error", description: "No audio was captured.", variant: "destructive" }); 
           setIsLoadingTranscription(false); 
           return; 
         } 
@@ -128,16 +127,17 @@ export default function VoiceToTextGhanaNLPPage() {
     <div className="flex flex-col gap-4 md:gap-6 max-w-3xl mx-auto">
       <div className="text-center">
         <h1 className="font-headline text-2xl sm:text-3xl md:text-4xl font-bold">Voice-to-Text</h1>
-        <p className="text-muted-foreground mt-1 md:mt-2 text-sm sm:text-base">Record and transcribe Twi audio using GhanaNLP.</p>
+        <p className="text-muted-foreground mt-1 md:mt-2 text-sm sm:base">Record and transcribe Twi audio using GhanaNLP.</p>
       </div>
-      {pageError && (<Alert variant="destructive" className="my-4 px-4 sm:px-6 py-3"><AlertTriangle className="h-4 w-4" /><AlertTitle>Error</AlertTitle><AlertDescription>{pageError}</AlertDescription></Alert>)}
-      
-      <div className="space-y-6">
+
+      <div className="p-6 rounded-lg border bg-muted/20 space-y-6">
+        {pageError && (<Alert variant="destructive" className="my-4 px-4 sm:px-6 py-3"><AlertTriangle className="h-4 w-4" /><AlertTitle>Error</AlertTitle><AlertDescription>{pageError}</AlertDescription></Alert>)}
+        
         <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
           <div className="w-full sm:w-auto">
-            <Label htmlFor="language-select-vot" className="block mb-1 text-sm font-medium">Language</Label>
+            <Label htmlFor="language-select-vot" className="block text-center sm:text-left mb-2 text-base font-medium">Language</Label>
             <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
-              <SelectTrigger id="language-select-vot" className="w-full sm:w-[180px]"> <SelectValue placeholder="Select language" /> </SelectTrigger>
+              <SelectTrigger id="language-select-vot" className="w-full sm:w-[220px]"> <SelectValue placeholder="Select language" /> </SelectTrigger>
               <SelectContent> {supportedApiLanguages.map(lang => (<SelectItem key={lang.code} value={lang.code}>{lang.name}</SelectItem>))} </SelectContent>
             </Select>
           </div>
@@ -153,11 +153,11 @@ export default function VoiceToTextGhanaNLPPage() {
         {isLoadingTranscription && !isRecording && ( <div className="flex items-center justify-center p-4"><Loader2 className="h-8 w-8 animate-spin text-primary" /><p className="ml-2 text-muted-foreground">Transcribing audio...</p></div> )}
         
         <div>
-          <Label htmlFor="transcription-output-vot" className="block mb-2 text-sm font-medium">Transcription Output:</Label>
-          <div className="p-4 rounded-lg bg-muted/30 min-h-[150px]">
-            <ScrollArea className="h-[150px] sm:h-[200px] w-full rounded-md">
+          <Label htmlFor="transcription-output-vot" className="block mb-2 text-base font-medium">Transcription Output:</Label>
+          <div className="p-4 rounded-lg bg-background min-h-[150px] border">
+            <ScrollArea className="h-[150px] sm:h-[200px] w-full">
               <p id="transcription-output-vot" className="text-base whitespace-pre-wrap" aria-label="Transcription output">
-                {transcribedText || "Transcription will appear here..."}
+                {transcribedText || "Your transcribed text will appear here..."}
               </p>
             </ScrollArea>
           </div>
