@@ -3,6 +3,7 @@
 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Languages, Mic, Volume2, History, FileText, Mail, HelpCircle } from 'lucide-react';
 
 export default function HelpPage() {
@@ -112,7 +113,7 @@ export default function HelpPage() {
   };
 
   return (
-    <div className="container mx-auto max-w-4xl p-4 md:p-6 space-y-8 md:space-y-12">
+    <div className="container mx-auto max-w-4xl p-4 md:p-6 space-y-8">
       <header className="text-center">
         <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold flex items-center justify-center gap-3">
           <HelpCircle className="w-8 h-8 sm:w-10 sm:h-10 text-primary" />
@@ -122,41 +123,49 @@ export default function HelpPage() {
       </header>
 
       {helpContent.sections.map((section) => (
-        <section key={section.id} id={section.id} className="p-6 rounded-lg border bg-muted/20">
-          <h2 className="text-2xl font-bold flex items-center mb-4">
-            <section.icon className="w-7 h-7 mr-3 text-primary" />
-            {section.title}
-          </h2>
-          <p className="text-muted-foreground mb-4">{section.description}</p>
-          <Accordion type="single" collapsible className="w-full">
-            {section.faqs.map((faq, index) => (
-              <AccordionItem value={`${section.id}-item-${index}`} key={index}>
-                <AccordionTrigger className="text-left hover:no-underline text-base py-3">
-                  {faq.q}
-                </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground text-sm whitespace-pre-line pt-1 pb-3">
-                  {faq.a}
-                </AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
-        </section>
+        <Card key={section.id}>
+          <CardHeader>
+             <CardTitle className="flex items-center text-2xl">
+                <section.icon className="w-7 h-7 mr-3 text-primary" />
+                {section.title}
+             </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground mb-4">{section.description}</p>
+            <Accordion type="single" collapsible className="w-full">
+              {section.faqs.map((faq, index) => (
+                <AccordionItem value={`${section.id}-item-${index}`} key={index}>
+                  <AccordionTrigger className="text-left hover:no-underline text-base py-3">
+                    {faq.q}
+                  </AccordionTrigger>
+                  <AccordionContent className="text-muted-foreground text-sm whitespace-pre-line pt-1 pb-3">
+                    {faq.a}
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          </CardContent>
+        </Card>
       ))}
 
-      <section id="contact" className="text-center p-6 rounded-lg border bg-muted/20">
-        <h2 className="text-2xl font-bold flex items-center justify-center mb-4">
-            <Mail className="w-7 h-7 mr-3 text-primary" />
-            Still Need Help?
-        </h2>
-        <p className="text-muted-foreground mb-4 max-w-2xl mx-auto">
-          If you couldn't find your answer, please don't hesitate to reach out to our support team.
-        </p>
-        <Button asChild className="btn-animated">
-          <a href={`mailto:${helpContent.contactEmail}?subject=Polyglot%20Feedback`}>
-            <Mail className="mr-2 h-4 w-4" /> Email Support
-          </a>
-        </Button>
-      </section>
+      <Card className="text-center">
+        <CardHeader>
+            <CardTitle className="flex items-center justify-center text-2xl">
+                <Mail className="w-7 h-7 mr-3 text-primary" />
+                Still Need Help?
+            </CardTitle>
+        </CardHeader>
+        <CardContent>
+            <p className="text-muted-foreground mb-4 max-w-2xl mx-auto">
+            If you couldn't find your answer, please don't hesitate to reach out to our support team.
+            </p>
+            <Button asChild className="btn-animated">
+            <a href={`mailto:${helpContent.contactEmail}?subject=Polyglot%20Feedback`}>
+                <Mail className="mr-2 h-4 w-4" /> Email Support
+            </a>
+            </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 }

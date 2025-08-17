@@ -3,6 +3,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2, FileText, Copy, Share2, AlertTriangle } from 'lucide-react';
@@ -55,57 +56,60 @@ export default function SummaryPage() {
   const handleShareSummary = async () => { if (!summary) return; if (navigator.share) { try { await navigator.share({ title: 'Text Summary', text: summary }); } catch (err: any) { if (err.name !== 'AbortError') { toast({ title: 'Share Failed', description: 'Could not share summary.', variant: 'destructive' }); } } } else { toast({ title: 'Share Not Supported', description: 'Your browser does not support direct sharing. Please copy the summary manually.', variant: 'destructive' }); } };
 
   return (
-    <div className="flex flex-col gap-4 md:gap-6">
-      <div className="text-center">
-        <h1 className="font-headline text-2xl sm:text-3xl md:text-4xl font-bold">AI Text Summarizer</h1>
-        <p className="text-muted-foreground mt-1 md:mt-2 text-sm sm:text-base">Get concise summaries of your long-form text content.</p>
-      </div>
+    <Card className="max-w-4xl mx-auto">
+      <CardHeader className="text-center">
+        <CardTitle className="font-headline text-2xl sm:text-3xl md:text-4xl font-bold">AI Text Summarizer</CardTitle>
+        <CardDescription className="text-muted-foreground mt-1 md:mt-2 text-sm sm:text-base">Get concise summaries of your long-form text content.</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {error && ( <Alert variant="destructive"><AlertTriangle className="h-4 w-4" /><AlertTitle>Summarization Error</AlertTitle><AlertDescription>{error}</AlertDescription></Alert> )}
+        
+        <div className="space-y-4">
+            <div>
+            <Label htmlFor="input-text-area" className="text-base font-medium">Your Text</Label>
+            <p className="text-xs sm:text-sm text-muted-foreground mb-2">Enter text, select its language, and click &quot;Summarize&quot;. Max {MAX_INPUT_LENGTH} characters.</p>
+            <Textarea id="input-text-area" placeholder="Paste your article, essay, or transcript here..." value={inputText} onChange={(e) => setInputText(e.target.value)} className="min-h-[150px] sm:min-h-[200px] text-base resize-y" aria-label="Input text for summarization" maxLength={MAX_INPUT_LENGTH} />
+            <p className="text-xs text-muted-foreground mt-1 text-right">{inputText.length} / {MAX_INPUT_LENGTH}</p>
+            </div>
 
-      {error && ( <Alert variant="destructive" className="my-4"><AlertTriangle className="h-4 w-4" /><AlertTitle>Summarization Error</AlertTitle><AlertDescription>{error}</AlertDescription></Alert> )}
-
-      <div className="space-y-4">
-        <div>
-          <Label htmlFor="input-text-area" className="text-base font-medium">Your Text</Label>
-           <p className="text-xs sm:text-sm text-muted-foreground mb-2">Enter your text, select its language, and click &quot;Summarize&quot;. Max {MAX_INPUT_LENGTH} characters.</p>
-          <Textarea id="input-text-area" placeholder="Paste your article, essay, or transcript here..." value={inputText} onChange={(e) => setInputText(e.target.value)} className="min-h-[150px] sm:min-h-[200px] text-base resize-y" aria-label="Input text for summarization" maxLength={MAX_INPUT_LENGTH} />
-          <p className="text-xs text-muted-foreground mt-1 text-right">{inputText.length} / {MAX_INPUT_LENGTH}</p>
+            <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-end">
+                <div className="w-full sm:w-auto flex-grow sm:flex-grow-0">
+                    <Label htmlFor="language-select" className="block mb-1 text-sm font-medium">Language of Input Text:</Label>
+                    <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
+                    <SelectTrigger id="language-select" className="w-full sm:w-[200px]"><SelectValue placeholder="Select language" /></SelectTrigger>
+                    <SelectContent>{supportedLanguages.map(lang => ( <SelectItem key={lang.code} value={lang.code}>{lang.name}</SelectItem> ))}</SelectContent>
+                    </Select>
+                </div>
+            </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-end">
-          <div className="w-full sm:w-auto flex-grow sm:flex-grow-0">
-            <Label htmlFor="language-select" className="block mb-1 text-sm font-medium">Language of Input Text:</Label>
-            <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
-              <SelectTrigger id="language-select" className="w-full sm:w-[200px]"><SelectValue placeholder="Select language" /></SelectTrigger>
-              <SelectContent>{supportedLanguages.map(lang => ( <SelectItem key={lang.code} value={lang.code}>{lang.name}</SelectItem> ))}</SelectContent>
-            </Select>
-          </div>
-          <Button onClick={handleSummarize} disabled={isLoading || !inputText.trim()} size="lg" className="w-full sm:w-auto btn-animated mt-2 sm:mt-0 flex-shrink-0">
+        {(summary || isLoading) && (
+            <div className="mt-2">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-3">
+                <h2 className="font-headline text-lg sm:text-xl">Generated Summary</h2>
+                {summary && (
+                    <div className="flex gap-2 self-start sm:self-auto">
+                    <Button variant="outline" size="icon" onClick={handleCopySummary} aria-label="Copy summary"><Copy className="h-4 w-4" /></Button>
+                    {typeof navigator !== 'undefined' && navigator.share && ( <Button variant="outline" size="icon" onClick={handleShareSummary} aria-label="Share summary"><Share2 className="h-4 w-4" /></Button> )}
+                    </div>
+                )}
+            </div>
+            <div className="p-4 rounded-lg bg-muted/50 border">
+                {isLoading && <div className="flex items-center justify-center h-[150px] sm:h-[200px]"><Loader2 className="h-6 w-6 animate-spin"/></div>}
+                {summary && !isLoading && (
+                    <ScrollArea className="h-[150px] sm:h-[200px] w-full rounded-md">
+                        <p className="text-sm whitespace-pre-wrap">{summary}</p>
+                    </ScrollArea>
+                )}
+            </div>
+            </div>
+        )}
+      </CardContent>
+      <CardFooter>
+          <Button onClick={handleSummarize} disabled={isLoading || !inputText.trim()} size="lg" className="w-full btn-animated">
             {isLoading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <FileText className="mr-2 h-5 w-5" />} Summarize Text
           </Button>
-        </div>
-      </div>
-
-      {(summary || isLoading) && (
-        <div className="mt-2">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-3">
-            <h2 className="font-headline text-lg sm:text-xl">Generated Summary</h2>
-            {summary && (
-                <div className="flex gap-2 self-start sm:self-auto">
-                <Button variant="outline" size="icon" onClick={handleCopySummary} aria-label="Copy summary"><Copy className="h-4 w-4" /></Button>
-                {typeof navigator !== 'undefined' && navigator.share && ( <Button variant="outline" size="icon" onClick={handleShareSummary} aria-label="Share summary"><Share2 className="h-4 w-4" /></Button> )}
-                </div>
-            )}
-          </div>
-          <div className="p-4 rounded-lg bg-muted/30">
-            {isLoading && <p className="text-muted-foreground">Generating summary...</p>}
-            {summary && !isLoading && (
-                 <ScrollArea className="h-[150px] sm:h-[200px] w-full rounded-md">
-                    <p className="text-sm whitespace-pre-wrap">{summary}</p>
-                </ScrollArea>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
+      </CardFooter>
+    </Card>
   );
 }

@@ -2,6 +2,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
@@ -50,8 +51,8 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="container mx-auto max-w-4xl p-4 md:p-6 space-y-8 md:space-y-12">
-      <header className="text-center">
+    <div className="container mx-auto max-w-4xl p-4 md:p-6 space-y-8">
+       <header className="text-center">
         <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold flex items-center justify-center gap-3">
           <Settings className="w-8 h-8 sm:w-10 sm:h-10 text-primary" />
           Settings
@@ -61,32 +62,24 @@ export default function SettingsPage() {
         </p>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
-        {/* Left-side Navigation (for Desktop) */}
-        <nav className="hidden md:block md:sticky md:top-24">
-          <ul className="space-y-2">
-            <li><Button variant="ghost" className="w-full justify-start text-base" onClick={() => document.getElementById('profile')?.scrollIntoView({ behavior: 'smooth' })}><User className="mr-3 h-5 w-5" />Profile</Button></li>
-            <li><Button variant="ghost" className="w-full justify-start text-base" onClick={() => document.getElementById('appearance')?.scrollIntoView({ behavior: 'smooth' })}><Palette className="mr-3 h-5 w-5" />Appearance</Button></li>
-            <li><Button variant="ghost" className="w-full justify-start text-base" onClick={() => document.getElementById('accessibility')?.scrollIntoView({ behavior: 'smooth' })}><Accessibility className="mr-3 h-5 w-5" />Accessibility</Button></li>
-          </ul>
-        </nav>
-
-        {/* Right-side Content */}
-        <div className="md:col-span-2 space-y-10">
-          <section id="profile" className="p-6 rounded-lg border bg-muted/20">
-            <h2 className="text-2xl font-bold flex items-center mb-4">
+      <div className="space-y-8">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center text-2xl">
               <User className="w-7 h-7 mr-3 text-primary" />
               Profile
-            </h2>
-            <p className="text-muted-foreground mb-6">Manage your personal information and security.</p>
+            </CardTitle>
+            <CardDescription>Manage your personal information and security.</CardDescription>
+          </CardHeader>
+          <CardContent>
             <form onSubmit={handleProfileUpdate} className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="displayName" className="text-base">Display Name</Label>
-                <Input id="displayName" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Your Name" disabled={authLoading} className="text-base"/>
+                <Input id="displayName" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Your Name" disabled={authLoading} className="text-base max-w-sm"/>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-base">Email</Label>
-                <Input id="email" type="email" value={email} readOnly disabled className="text-base"/>
+                <Input id="email" type="email" value={email} readOnly disabled className="text-base max-w-sm"/>
               </div>
               <div className="flex flex-col sm:flex-row gap-3 pt-2">
                 <Button type="submit" disabled={authLoading} className="btn-animated w-full sm:w-auto">
@@ -97,14 +90,18 @@ export default function SettingsPage() {
                 </Button>
               </div>
             </form>
-          </section>
+          </CardContent>
+        </Card>
 
-          <section id="appearance" className="p-6 rounded-lg border bg-muted/20">
-            <h2 className="text-2xl font-bold flex items-center mb-4">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center text-2xl">
               <Palette className="w-7 h-7 mr-3 text-primary" />
               Appearance
-            </h2>
-            <p className="text-muted-foreground mb-6">Customize the look and feel of the application.</p>
+            </CardTitle>
+            <CardDescription>Customize the look and feel of the application.</CardDescription>
+          </CardHeader>
+          <CardContent>
             <div className="space-y-2">
               <Label htmlFor="theme-settings" className="text-base">Theme</Label>
               <Select value={theme} onValueChange={handleThemeChange}>
@@ -116,14 +113,18 @@ export default function SettingsPage() {
                 </SelectContent>
               </Select>
             </div>
-          </section>
+          </CardContent>
+        </Card>
 
-          <section id="accessibility" className="p-6 rounded-lg border bg-muted/20">
-            <h2 className="text-2xl font-bold flex items-center mb-4">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center text-2xl">
               <Accessibility className="w-7 h-7 mr-3 text-primary" />
               Accessibility
-            </h2>
-            <p className="text-muted-foreground mb-6">Adjust settings for better usability.</p>
+            </CardTitle>
+            <CardDescription>Adjust settings for better usability.</CardDescription>
+          </CardHeader>
+          <CardContent>
             <div className="space-y-2">
               <Label htmlFor="text-size-settings" className="text-base">Text Size</Label>
                <Select value={textSize} onValueChange={(value) => setTextSize(value as 'text-size-sm' | 'text-size-md' | 'text-size-lg')}>
@@ -135,8 +136,8 @@ export default function SettingsPage() {
                 </SelectContent>
               </Select>
             </div>
-          </section>
-        </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
