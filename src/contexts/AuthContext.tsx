@@ -11,25 +11,28 @@ import {
   signInWithEmailAndPassword,
   updateProfile,
   sendPasswordResetEmail,
-  GoogleAuthProvider, // Added
-  signInWithPopup     // Added
+  GoogleAuthProvider,
+  signInWithPopup
 } from 'firebase/auth';
 import type { AuthContextType, LoginCredentials, SignupCredentials, UserProfileUpdateData } from '@/types/auth';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // For specific actions like login/logout
+  const [initialLoad, setInitialLoad] = useState(true); // For the initial auth state check
   const router = useRouter();
   const { toast } = useToast();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
-      setLoading(false);
+      setInitialLoad(false); // Initial auth check is complete
+      setLoading(false); // Also stop general loading
     });
     return () => unsubscribe();
   }, []);
@@ -38,13 +41,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
     try {
       await signInWithEmailAndPassword(auth, credentials.email, credentials.password);
-      // Redirect is handled by useEffect in login/signup pages watching 'user' state
-      // router.push('/translate'); 
+      router.push('/translate');
     } catch (error: any) {
       toast({ title: 'Login Failed', description: error.message || 'An unexpected error occurred.', variant: 'destructive' });
-      throw error; // Re-throw to be caught by calling component if needed
-    }
-    finally {
+      throw error;
+    } finally {
       setLoading(false);
     }
   };
@@ -53,13 +54,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
     try {
       await createUserWithEmailAndPassword(auth, credentials.email, credentials.password);
-      // Redirect is handled by useEffect in login/signup pages watching 'user' state
-      // router.push('/translate');
+      router.push('/translate');
     } catch (error: any) {
       toast({ title: 'Signup Failed', description: error.message || 'An unexpected error occurred.', variant: 'destructive' });
-      throw error; // Re-throw to be caught by calling component if needed
-    } 
-    finally {
+      throw error;
+    } finally {
       setLoading(false);
     }
   };
@@ -69,8 +68,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const provider = new GoogleAuthProvider();
     try {
       await signInWithPopup(auth, provider);
-      // Redirect is handled by useEffect in login/signup pages watching 'user' state
-      // router.push('/translate'); 
+      router.push('/translate');
       toast({ title: 'Signed in with Google', description: 'Successfully signed in with your Google account.' });
     } catch (error: any) {
       console.error("Google Sign-In Error:", error);
@@ -81,7 +79,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           errorMessage = 'An account already exists with this email using a different sign-in method. Try signing in with that method.';
       }
       toast({ title: 'Google Sign-In Error', description: errorMessage, variant: 'destructive' });
-      // Do not re-throw, error is handled by toast
     } finally {
       setLoading(false);
     }
@@ -94,8 +91,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       router.push('/login');
     } catch (error: any) {
       toast({ title: 'Logout Failed', description: error.message || 'An unexpected error occurred.', variant: 'destructive' });
-    }
-    finally {
+    } finally {
       setLoading(false);
     }
   };
@@ -112,7 +108,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       toast({ title: 'Profile Updated', description: 'Your profile has been successfully updated.' });
     } catch (error: any) {
       toast({ title: 'Profile Update Failed', description: error.message, variant: 'destructive' });
-      throw error; 
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -135,7 +131,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const value = { user, loading, login, signup, logout, updateUserProfile, sendPasswordReset, signInWithGoogle };
+  const value = { user, loading, initialLoad, login, signup, logout, updateUserProfile, sendPasswordReset, signInWithGoogle };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
@@ -147,4 +143,3 @@ export const useAuth = (): AuthContextType => {
   }
   return context;
 };
-

@@ -12,8 +12,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import AuthFormWrapper from '@/components/auth/AuthFormWrapper';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import { Chrome } from 'lucide-react'; // Using Chrome icon as a generic for Google
+import { Chrome } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 const signupSchema = z.object({
   email: z.string().email({ message: 'Invalid email address.' }),
@@ -27,15 +28,15 @@ const signupSchema = z.object({
 type SignupFormValues = z.infer<typeof signupSchema>;
 
 export default function SignupPage() {
-  const { signup, signInWithGoogle, loading, user } = useAuth();
+  const { signup, signInWithGoogle, loading, user, initialLoad } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
 
   useEffect(() => {
-    if (user) {
+    if (!initialLoad && user) {
       router.push('/translate');
     }
-  }, [user, router]);
+  }, [user, initialLoad, router]);
 
   const form = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
@@ -50,7 +51,6 @@ export default function SignupPage() {
     try {
       await signup({ email: data.email, password: data.password });
     } catch (error: any) {
-      // Error toast is handled in AuthContext
       form.setError('root', { message: error.message || 'Signup failed. Please try again.' });
     }
   };
@@ -59,18 +59,16 @@ export default function SignupPage() {
     try {
       await signInWithGoogle();
     } catch (error: any) {
-       // Errors are handled by signInWithGoogle in AuthContext.
-       // This catch is a fallback for unexpected issues.
       toast({ title: 'Sign-Up Error', description: 'An unexpected error occurred during Google Sign-Up.', variant: 'destructive' });
     }
   };
 
-  if (user && !loading) { // Check loading state to avoid rendering form during redirect
-    return <div className="flex min-h-screen items-center justify-center"><p>Redirecting...</p></div>;
+  if (initialLoad) {
+    return <div className="flex min-h-screen items-center justify-center"><LoadingSpinner size="lg" /><p className="ml-4">Loading...</p></div>;
   }
-
-  if (loading && !user) { // Show loading only if not redirecting yet
-     return <div className="flex min-h-screen items-center justify-center"><p>Loading...</p></div>;
+  
+  if (user) {
+    return <div className="flex min-h-screen items-center justify-center"><LoadingSpinner size="lg" /><p className="ml-4">Redirecting...</p></div>;
   }
 
   return (
@@ -120,6 +118,7 @@ export default function SignupPage() {
             <p className="text-sm font-medium text-destructive">{form.formState.errors.root.message}</p>
           )}
           <Button type="submit" className="w-full btn-animated" disabled={loading}>
+            {loading ? <LoadingSpinner size="sm" className="mr-2"/> : null}
             {loading ? 'Signing up...' : 'Sign Up'}
           </Button>
         </form>

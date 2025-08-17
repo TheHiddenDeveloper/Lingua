@@ -19,17 +19,17 @@ const mainNavItems = [
 ];
 
 export default function AppLayout({ children }: { children: ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user, initialLoad } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (!initialLoad && !user) {
       router.push('/login');
     }
-  }, [user, loading, router]);
+  }, [user, initialLoad, router]);
 
-  if (loading) {
+  if (initialLoad) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <LoadingSpinner size="lg" />
@@ -38,26 +38,20 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   }
 
   if (!user) {
-    // This should ideally not be reached if the useEffect redirect works,
-    // but it's a fallback.
     return (
        <div className="flex min-h-screen items-center justify-center bg-background">
          <p>Redirecting to login...</p>
+         <LoadingSpinner size="lg" />
       </div>
     );
   }
 
-  // Determine the active tab based on the current path
-  // Ensure that even nested paths like /history/details still highlight /history
   const activeTabValue = mainNavItems.find(item => pathname.startsWith(item.href))?.href || (pathname.startsWith('/settings') || pathname.startsWith('/history') || pathname.startsWith('/help') || pathname.startsWith('/about') ? '' : '/translate');
-
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <AppHeader />
 
-      {/* Desktop Tab Navigation for Main Sections */}
-      {/* Hide tabs if on settings, history, help, about pages to avoid confusion, as they are icon buttons in header */}
       {!(pathname.startsWith('/settings') || pathname.startsWith('/history') || pathname.startsWith('/help') || pathname.startsWith('/about')) && (
         <div className="hidden md:block border-b sticky top-16 z-30 bg-background/95 backdrop-blur-lg">
           <Tabs value={activeTabValue} className="container mx-auto">

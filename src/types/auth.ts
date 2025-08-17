@@ -18,11 +18,11 @@ export interface UserProfileUpdateData {
 export interface AuthContextType {
   user: User | null;
   loading: boolean;
+  initialLoad: boolean; // Tracks the initial onAuthStateChanged check
   login: (credentials: LoginCredentials) => Promise<void>;
   signup: (credentials: SignupCredentials) => Promise<void>;
   logout: () => Promise<void>;
   updateUserProfile: (data: UserProfileUpdateData) => Promise<void>;
   sendPasswordReset: () => Promise<void>;
-  signInWithGoogle: () => Promise<void>; // Added for Google Sign-In
+  signInWithGoogle: () => Promise<void>;
 }
-

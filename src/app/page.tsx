@@ -7,18 +7,18 @@ import { useAuth } from '@/contexts/AuthContext';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 export default function HomePage() {
-  const { user, loading } = useAuth();
+  const { user, initialLoad } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading) {
+    if (!initialLoad) {
       if (user) {
         router.replace('/translate');
       } else {
         router.replace('/login');
       }
     }
-  }, [user, loading, router]);
+  }, [user, initialLoad, router]);
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center">
