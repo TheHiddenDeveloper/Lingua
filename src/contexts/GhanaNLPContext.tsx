@@ -4,6 +4,7 @@
 import type { ReactNode } from 'react';
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { getTtsLanguages, getTtsSpeakers } from '@/ai/flows/tts-options-flow';
 
 interface ApiLanguage {
   code: string; // Internal app code (e.g., 'tw')
@@ -26,8 +27,6 @@ interface GhanaNLPContextType {
 
 const GhanaNLPContext = createContext<GhanaNLPContextType | undefined>(undefined);
 
-// Languages the PRD specifies are supported by the app for TTS
-// Ensure apiName matches the keys returned by the GhanaNLP /languages endpoint (e.g., "tw", "ee")
 const PRD_LANGUAGES_SUPPORTED_BY_TTS: ApiLanguage[] = [
   { code: 'tw', name: 'Twi', apiName: 'tw' },
   { code: 'ee', name: 'Ewe', apiName: 'ee' },
@@ -53,6 +52,7 @@ export const GhanaNLPProvider = ({ children }: { children: ReactNode }) => {
     const headers = { ...(options.headers || {}), 'Ocp-Apim-Subscription-Key': apiKeyBasic };
     
     try {
+      // This fetch is for direct API calls from other components, not for initial data loading.
       const response = await fetch(endpoint, { ...options, headers });
       if (!response.ok) {
          let errorResponseMessage = `GhanaNLP API Error: ${response.statusText} (Status: ${response.status})`;
@@ -85,13 +85,6 @@ export const GhanaNLPProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const loadInitialData = async () => {
-      if (!apiKeyBasic) { 
-        setInitialDataError("No GhanaNLP API key configured. Please set NEXT_PUBLIC_GHANANLP_API_KEY_BASIC in your environment.");
-        setIsLoadingInitialData(false);
-        toast({ title: 'Configuration Error', description: 'GhanaNLP API key is missing.', variant: 'destructive' });
-        return;
-      }
-
       setIsLoadingInitialData(true);
       setInitialDataError(null);
 
@@ -99,22 +92,19 @@ export const GhanaNLPProvider = ({ children }: { children: ReactNode }) => {
       let speakerData: any = null;
 
       try {
-        const langResponse = await fetchGhanaNLP('https://translation-api.ghananlp.org/tts/v1/languages', {});
-        langData = await langResponse.json();
-        
-        const speakerResponse = await fetchGhanaNLP('https://translation-api.ghananlp.org/tts/v1/speakers', {});
-        speakerData = await speakerResponse.json();
+        // Call the server-side Genkit flows instead of fetching directly
+        langData = await getTtsLanguages();
+        speakerData = await getTtsSpeakers();
 
-        // Check if langData is an array of objects like [{ name: 'Twi', code: 'tw' }, ...]
         const apiLanguages = langData.languages || (Array.isArray(langData) ? langData : []);
         const supportedApiLangCodes = Array.isArray(apiLanguages) 
-          ? apiLanguages.map((lang: any) => lang.code || lang.name || lang.language).filter(Boolean) 
+          ? apiLanguages.map((lang: any) => (lang.code || lang.name || lang.language || '').toLowerCase()).filter(Boolean) 
           : [];
 
         const filteredAppLanguages = PRD_LANGUAGES_SUPPORTED_BY_TTS.filter(prdLang => 
-          supportedApiLangCodes.includes(prdLang.apiName)
+          supportedApiLangCodes.includes(prdLang.apiName.toLowerCase())
         );
-
+        
         setLanguages(filteredAppLanguages);
 
         if (filteredAppLanguages.length === 0 && PRD_LANGUAGES_SUPPORTED_BY_TTS.length > 0) {
@@ -122,11 +112,12 @@ export const GhanaNLPProvider = ({ children }: { children: ReactNode }) => {
             const supportedFromApi = supportedApiLangCodes.join(', ') || '[none reported by API]';
             const langErrorMessage = `App requires ${prdLangNames} for TTS. API reported supporting: ${supportedFromApi}. Check key validity/permissions or language codes. Ensure 'apiName' in PRD_LANGUAGES_SUPPORTED_BY_TTS matches API codes.`;
             setInitialDataError(langErrorMessage);
+            const rawDataForError = `\n--- Raw Language Data ---\n${JSON.stringify(langData, null, 2)}\n--- Raw Speaker Data ---\n${JSON.stringify(speakerData, null, 2)}`;
+            console.error(langErrorMessage, rawDataForError);
             toast({ title: 'Language Config Issue', description: 'Could not find supported TTS languages. Check console for details.', variant: 'warning', duration: 10000 });
         }
         
         const transformedSpeakers: ApiSpeakersData = {};
-        // The API returns an object where keys are language codes and values are speaker lists. e.g. { "tw": ["abena", "yaw"], "ee": [...] }
         const rawSpeakers = speakerData.speakers || (typeof speakerData === 'object' && speakerData !== null ? speakerData : {});
 
         if (typeof rawSpeakers === 'object') {
@@ -146,12 +137,10 @@ export const GhanaNLPProvider = ({ children }: { children: ReactNode }) => {
         setSpeakers(transformedSpeakers);
 
       } catch (err: any) {
-        if ((err as any).noKeys) {
-             setInitialDataError(err.message);
-        } else {
-            const rawDataForError = `\n--- Raw Language Data ---\n${JSON.stringify(langData, null, 2)}\n--- Raw Speaker Data ---\n${JSON.stringify(speakerData, null, 2)}`;
-            setInitialDataError((err.message || "Failed to load initial TTS options.") + rawDataForError);
-        }
+        const rawDataForError = `\n--- Raw Language Data ---\n${JSON.stringify(langData, null, 2)}\n--- Raw Speaker Data ---\n${JSON.stringify(speakerData, null, 2)}`;
+        const errorMessage = (err.message || "Failed to load initial TTS options from the server.") + rawDataForError;
+        setInitialDataError(errorMessage);
+        console.error(errorMessage);
         toast({ title: 'API Error', description: `Could not load initial TTS options. Check console for details.`, variant: 'destructive' });
       } finally {
         setIsLoadingInitialData(false);
@@ -159,7 +148,8 @@ export const GhanaNLPProvider = ({ children }: { children: ReactNode }) => {
     };
 
     loadInitialData();
-  }, [apiKeyBasic, toast, fetchGhanaNLP]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [toast]);
 
   const getApiKeyBasic = () => apiKeyBasic;
 
