@@ -12,8 +12,8 @@ import {
   updateProfile,
   sendPasswordResetEmail,
   GoogleAuthProvider,
-  signInWithRedirect, // Changed from signInWithPopup
-  getRedirectResult // Added to handle redirect result
+  signInWithRedirect,
+  getRedirectResult
 } from 'firebase/auth';
 import type { AuthContextType, LoginCredentials, SignupCredentials, UserProfileUpdateData } from '@/types/auth';
 import { useRouter } from 'next/navigation';
@@ -29,38 +29,45 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      if (initialLoad) {
-        // Handle the redirect result from Google Sign-In only on initial load
-        setLoading(true);
-        getRedirectResult(auth)
-          .then((result) => {
-            if (result) {
-              // This is the successfully signed-in user.
-              const user = result.user;
-              toast({ title: 'Signed in with Google', description: `Welcome, ${user.displayName || user.email}!` });
-              router.push('/translate');
-            }
-          })
-          .catch((error) => {
-            console.error("Google Sign-In Redirect Error:", error);
-            let errorMessage = error.message || 'Google Sign-In failed. Please try again.';
-            if (error.code === 'auth/account-exists-with-different-credential') {
-              errorMessage = 'An account already exists with this email using a different sign-in method. Try signing in with that method.';
-            }
-            toast({ title: 'Google Sign-In Error', description: errorMessage, variant: 'destructive' });
-          })
-          .finally(() => {
-            setInitialLoad(false);
-            setLoading(false);
-          });
+    // This function will handle the entire auth initialization process.
+    const initializeAuth = async () => {
+      try {
+        // First, check if there's a redirect result from Google Sign-In.
+        // This promise resolves to null if the user just visited the page without a redirect.
+        const result = await getRedirectResult(auth);
+        
+        if (result) {
+          // User signed in via redirect.
+          const loggedInUser = result.user;
+          setUser(loggedInUser); // Set user state immediately
+          toast({ title: 'Signed in with Google', description: `Welcome back, ${loggedInUser.displayName || loggedInUser.email}!` });
+          router.push('/translate'); // Redirect to a protected route
+        }
+      } catch (error: any) {
+        console.error("Google Sign-In Redirect Error:", error);
+        let errorMessage = error.message || 'Google Sign-In failed. Please try again.';
+        if (error.code === 'auth/account-exists-with-different-credential') {
+          errorMessage = 'An account already exists with this email using a different sign-in method.';
+        }
+        toast({ title: 'Google Sign-In Error', description: errorMessage, variant: 'destructive' });
       }
-    });
 
-    return () => unsubscribe();
+      // After handling redirect, set up the onAuthStateChanged listener.
+      // This will manage the user's session state going forward.
+      const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+        setUser(currentUser);
+        setInitialLoad(false); // Mark initial load as complete
+        setLoading(false); // Stop loading indicator
+      });
+
+      // Cleanup the listener on unmount
+      return () => unsubscribe();
+    };
+
+    initializeAuth();
+    // The dependency array is empty, so this runs only once on component mount.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Run only once on mount
+  }, []);
 
   const login = async (credentials: LoginCredentials) => {
     setLoading(true);
@@ -92,16 +99,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
     const provider = new GoogleAuthProvider();
     try {
-      // We are now initiating a redirect, not a popup.
+      // Initiates the redirect. The result is handled by the useEffect hook.
       await signInWithRedirect(auth, provider);
-      // The rest of the logic (handling the result) is now in the useEffect hook.
     } catch (error: any) {
-      // This catch block will primarily handle errors during the redirect initiation.
       console.error("Google Sign-In Redirect Initiation Error:", error);
       toast({ title: 'Sign-In Error', description: 'Could not start the Google Sign-In process. Please try again.', variant: 'destructive' });
       setLoading(false);
     }
-    // No finally setLoading(false) here, as the page will redirect away.
   };
 
   const logout = async () => {
@@ -124,6 +128,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
     try {
       await updateProfile(auth.currentUser, data);
+      // Create a new object to force re-render in components that use the user object
       setUser(auth.currentUser ? { ...auth.currentUser } : null);
       toast({ title: 'Profile Updated', description: 'Your profile has been successfully updated.' });
     } catch (error: any) {
