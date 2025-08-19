@@ -20,10 +20,8 @@ interface GhanaNLPContextType {
   speakers: ApiSpeakersData | null;
   isLoadingInitialData: boolean;
   initialDataError: string | null;
-  fetchGhanaNLP: (endpoint: string, options: RequestInit, isRetry?: boolean) => Promise<Response>;
-  getApiKeyDev: () => string | undefined;
+  fetchGhanaNLP: (endpoint: string, options: RequestInit) => Promise<Response>;
   getApiKeyBasic: () => string | undefined;
-  activeKeyType: 'basic' | 'dev';
 }
 
 const GhanaNLPContext = createContext<GhanaNLPContextType | undefined>(undefined);
@@ -36,17 +34,8 @@ const PRD_LANGUAGES_SUPPORTED_BY_TTS: ApiLanguage[] = [
 ];
 
 export const GhanaNLPProvider = ({ children }: { children: ReactNode }) => {
-  const apiKeyDev = process.env.NEXT_PUBLIC_GHANANLP_API_KEY_DEV;
   const apiKeyBasic = process.env.NEXT_PUBLIC_GHANANLP_API_KEY_BASIC;
 
-  const [activeKeyType, setActiveKeyType] = useState<'basic' | 'dev'>(() => {
-    return apiKeyDev ? 'dev' : 'basic';
-  });
-  const [activeKey, setActiveKey] = useState<string | undefined>(() => {
-    return apiKeyDev || apiKeyBasic;
-  });
-  const [devKeyHasFailed, setDevKeyHasFailed] = useState(false);
-  
   const [languages, setLanguages] = useState<ApiLanguage[]>([]);
   const [speakers, setSpeakers] = useState<ApiSpeakersData | null>(null);
   const [isLoadingInitialData, setIsLoadingInitialData] = useState(true);
@@ -54,62 +43,17 @@ export const GhanaNLPProvider = ({ children }: { children: ReactNode }) => {
   
   const { toast } = useToast();
 
-  const _fetchWithKey = async (url: string, options: RequestInit, keyToUse: string | undefined, keyTypeForError: 'basic' | 'dev'): Promise<Response> => {
-    if (!keyToUse) {
-      throw new Error(`GhanaNLP API Key (${keyTypeForError}) is not configured.`);
+  const fetchGhanaNLP = useCallback(async (endpoint: string, options: RequestInit): Promise<Response> => {
+    if (!apiKeyBasic) {
+      const error = new Error("GhanaNLP API Key (basic) is not configured.");
+      (error as any).noKeys = true;
+      throw error;
     }
-    const headers = { ...(options.headers || {}), 'Ocp-Apim-Subscription-Key': keyToUse };
-    return fetch(url, { ...options, headers });
-  };
 
-  const fetchGhanaNLP = useCallback(async (endpoint: string, options: RequestInit, isRetryCall: boolean = false): Promise<Response> => {
-    let currentKeyToUse = activeKey;
-    let currentKeyType = activeKeyType;
+    const headers = { ...(options.headers || {}), 'Ocp-Apim-Subscription-Key': apiKeyBasic };
     
-    // Prioritize dev key if available and hasn't failed
-    if (apiKeyDev && !devKeyHasFailed) {
-      currentKeyToUse = apiKeyDev;
-      currentKeyType = 'dev';
-    } else if (apiKeyBasic) {
-      currentKeyToUse = apiKeyBasic;
-      currentKeyType = 'basic';
-    } else { // No keys configured or both tried and failed
-        const keyErrorMsg = !apiKeyDev && !apiKeyBasic ? "No GhanaNLP API keys are configured." : "All configured GhanaNLP API keys have failed or are invalid.";
-        const error = new Error(keyErrorMsg);
-        (error as any).noKeys = true; // Custom flag
-        throw error;
-    }
-    setActiveKey(currentKeyToUse); // Ensure activeKey state is current
-    setActiveKeyType(currentKeyType);
-
     try {
-      const response = await _fetchWithKey(endpoint, options, currentKeyToUse, currentKeyType);
-      if (response.status === 403) {
-        if (currentKeyType === 'dev' && apiKeyBasic) {
-          setDevKeyHasFailed(true); // Mark dev key as failed for this session
-          setActiveKey(apiKeyBasic); // Switch to basic key
-          setActiveKeyType('basic');
-          if (!isRetryCall) {
-            toast({
-              title: 'API Key Switched',
-              description: `Dev key failed. Switched to basic API key. Retrying request...`,
-              variant: 'default',
-            });
-          }
-          // Retry the request ONCE with the basic key
-          return _fetchWithKey(endpoint, options, apiKeyBasic, 'basic');
-        } else {
-          let errorMessage = `GhanaNLP API Error (${currentKeyType} key): Access Forbidden (403).`;
-          if (currentKeyType === 'basic' && devKeyHasFailed) {
-            errorMessage = `GhanaNLP API Error: Both dev and basic keys resulted in Access Forbidden (403). Check API key validity and permissions.`;
-          } else if (currentKeyType === 'dev' && !apiKeyBasic) {
-            errorMessage = `GhanaNLP API Error (dev key): Access Forbidden (403). No basic key configured to fallback.`;
-          }
-          const error = new Error(errorMessage);
-          (error as any).response = response;
-          throw error;
-        }
-      }
+      const response = await fetch(endpoint, { ...options, headers });
       if (!response.ok) {
          let errorResponseMessage = `GhanaNLP API Error: ${response.statusText} (Status: ${response.status})`;
          try { 
@@ -136,15 +80,15 @@ export const GhanaNLPProvider = ({ children }: { children: ReactNode }) => {
       console.error('GhanaNLP Fetch Error:', error);
       throw error;
     }
-  }, [activeKey, activeKeyType, devKeyHasFailed, apiKeyBasic, apiKeyDev, toast]);
+  }, [apiKeyBasic]);
 
 
   useEffect(() => {
     const loadInitialData = async () => {
-      if (!apiKeyDev && !apiKeyBasic) { 
-        setInitialDataError("No GhanaNLP API keys configured. Please set NEXT_PUBLIC_GHANANLP_API_KEY_DEV or NEXT_PUBLIC_GHANANLP_API_KEY_BASIC in your environment.");
+      if (!apiKeyBasic) { 
+        setInitialDataError("No GhanaNLP API key configured. Please set NEXT_PUBLIC_GHANANLP_API_KEY_BASIC in your environment.");
         setIsLoadingInitialData(false);
-        toast({ title: 'Configuration Error', description: 'GhanaNLP API keys are missing.', variant: 'destructive' });
+        toast({ title: 'Configuration Error', description: 'GhanaNLP API key is missing.', variant: 'destructive' });
         return;
       }
 
@@ -161,7 +105,6 @@ export const GhanaNLPProvider = ({ children }: { children: ReactNode }) => {
         const speakerResponse = await fetchGhanaNLP('https://translation-api.ghananlp.org/tts/v1/speakers', {});
         speakerData = await speakerResponse.json();
 
-        // The API might return the languages array directly, or nested under a key. Check both.
         const apiLanguages = langData.languages || (Array.isArray(langData) ? langData : []);
 
         const supportedApiLangCodes = Array.isArray(apiLanguages) 
@@ -175,26 +118,22 @@ export const GhanaNLPProvider = ({ children }: { children: ReactNode }) => {
 
         if (filteredAppLanguages.length === 0 && PRD_LANGUAGES_SUPPORTED_BY_TTS.length > 0) {
             const prdLangNames = PRD_LANGUAGES_SUPPORTED_BY_TTS.map(l => l.name).join('/');
-            // Create a detailed error message with the raw API response for debugging.
             const rawLangDataString = JSON.stringify(langData, null, 2);
             const langErrorMessage = `App requires ${prdLangNames} for TTS, but no supported languages were found from the API. This is likely an issue with the API key or response format. Raw API language data: \n${rawLangDataString}`;
             setInitialDataError(langErrorMessage);
             toast({ title: 'Language Config Issue', description: 'Could not find supported TTS languages. Check console for details.', variant: 'warning', duration: 10000 });
         }
         
-        // Make speaker parsing more robust
         const transformedSpeakers: ApiSpeakersData = {};
         const rawSpeakers = speakerData.speakers || (typeof speakerData === 'object' && speakerData !== null ? speakerData : {});
 
         if (typeof rawSpeakers === 'object') {
             for (const langApiName of Object.keys(rawSpeakers)) {
-                // Find the corresponding language definition in our app's config
                 const appLangDef = PRD_LANGUAGES_SUPPORTED_BY_TTS.find(
                     l => l.name.toLowerCase() === langApiName.toLowerCase() || 
                          l.apiName.toLowerCase() === langApiName.toLowerCase()
                 );
                 if (appLangDef) {
-                    // Ensure the value is an array of strings before assigning
                     const speakerList = rawSpeakers[langApiName];
                     if (Array.isArray(speakerList) && speakerList.every(s => typeof s === 'string')) {
                          transformedSpeakers[appLangDef.apiName] = speakerList;
@@ -211,23 +150,19 @@ export const GhanaNLPProvider = ({ children }: { children: ReactNode }) => {
             const rawDataForError = `\n--- Raw Language Data ---\n${JSON.stringify(langData, null, 2)}\n--- Raw Speaker Data ---\n${JSON.stringify(speakerData, null, 2)}`;
             setInitialDataError((err.message || "Failed to load initial TTS options.") + rawDataForError);
         }
-        if (!err.message?.includes("Access Forbidden") && !err.message?.includes("Switched to basic API key")) {
-             toast({ title: 'API Error', description: `Could not load initial TTS options. Check console for details.`, variant: 'destructive' });
-        }
+        toast({ title: 'API Error', description: `Could not load initial TTS options. Check console for details.`, variant: 'destructive' });
       } finally {
         setIsLoadingInitialData(false);
       }
     };
 
     loadInitialData();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [apiKeyDev, apiKeyBasic, toast]);
+  }, [apiKeyBasic, toast, fetchGhanaNLP]);
 
-  const getApiKeyDev = () => apiKeyDev;
   const getApiKeyBasic = () => apiKeyBasic;
 
   return (
-    <GhanaNLPContext.Provider value={{ languages, speakers, isLoadingInitialData, initialDataError, fetchGhanaNLP, getApiKeyDev, getApiKeyBasic, activeKeyType }}>
+    <GhanaNLPContext.Provider value={{ languages, speakers, isLoadingInitialData, initialDataError, fetchGhanaNLP, getApiKeyBasic }}>
       {children}
     </GhanaNLPContext.Provider>
   );
