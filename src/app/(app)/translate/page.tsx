@@ -52,7 +52,7 @@ export default function TranslatePage() {
   const { user } = useAuth();
   const { isListening, transcript, startListening, stopListening, error: sttError, browserSupportsSpeechRecognition } = useSpeechRecognition();
   const { isSpeaking, speak, cancel: cancelSpeech, error: ttsError, browserSupportsTextToSpeech } = useTextToSpeech();
-  const { fetchGhanaNLP, getApiKeyBasic, getApiKeyDev } = useGhanaNLP();
+  const { fetchGhanaNLP, getApiKeyBasic } = useGhanaNLP();
 
   useEffect(() => { if (transcript) { setInputText(prev => prev + transcript); } }, [transcript]);
   useEffect(() => { if (sttError) toast({ title: 'Voice Input Error', description: sttError, variant: 'destructive' }); }, [sttError, toast]);
@@ -62,25 +62,25 @@ export default function TranslatePage() {
     if (!inputText.trim()) { toast({ title: 'Input Required', description: 'Please enter text to translate.', variant: 'destructive' }); return; }
     if (inputText.length > 1000) { toast({ title: 'Input Too Long', description: 'Input text must be 1000 characters or less.', variant: 'destructive' }); return; }
     const apiKeyBasicExists = !!getApiKeyBasic();
-    const apiKeyDevExists = !!getApiKeyDev();
-    if (!apiKeyBasicExists && !apiKeyDevExists) { const msg = 'Translation API key is not configured.'; toast({ title: 'API Key Missing', description: msg, variant: 'destructive' }); setTranslationPageError(msg); return; }
+    if (!apiKeyBasicExists) { const msg = 'Translation API key is not configured.'; toast({ title: 'API Key Missing', description: msg, variant: 'destructive' }); setTranslationPageError(msg); return; }
 
     setIsLoadingTranslation(true); setSummary(null); setAiError(null); setTranslationPageError(null); setOutputText('');
     const isLocalToLocal = sourceLang !== 'en' && targetLang !== 'en';
+    const translationEndpoint = 'https://translation-api.ghananlp.org/v1/translate';
 
     try {
       let textForFinalTranslation = inputText; let sourceForFinalApiCall = sourceLang;
       if (isLocalToLocal) {
         const apiSourceLangToEn = sourceLang === 'ga' ? 'gaa' : sourceLang; const langPairToEn = `${apiSourceLangToEn}-en`;
         toast({ title: 'Step 1: Translating to English', description: 'Translating your input to English first for local language conversion.'});
-        const responseToEn = await fetchGhanaNLP('https://translation-api.ghananlp.org/v1/translate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ in: inputText, lang: langPairToEn }), });
+        const responseToEn = await fetchGhanaNLP(translationEndpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ in: inputText, lang: langPairToEn }), });
         const intermediateEnglishText = await responseToEn.text();
         if (!intermediateEnglishText.trim()) { throw new Error('Intermediate translation to English resulted in empty or whitespace text.'); }
         textForFinalTranslation = intermediateEnglishText; sourceForFinalApiCall = 'en';
         toast({ title: 'Step 2: Translating to Target Language', description: 'Now translating from English to your target local language.'});
       }
       const apiSourceForFinalStep = sourceForFinalApiCall === 'ga' ? 'gaa' : sourceForFinalApiCall; const apiTargetForFinalStep = targetLang === 'ga' ? 'gaa' : targetLang; const finalLangPair = `${apiSourceForFinalStep}-${apiTargetForFinalStep}`;
-      const responseToTarget = await fetchGhanaNLP('https://translation-api.ghananlp.org/v1/translate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ in: textForFinalTranslation, lang: finalLangPair }), });
+      const responseToTarget = await fetchGhanaNLP(translationEndpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ in: textForFinalTranslation, lang: finalLangPair }), });
       const translatedText = await responseToTarget.text();
       if (!translatedText.trim() && isLocalToLocal) { throw new Error('Final translation from English to target local language resulted in empty or whitespace text.'); }
       else if (!translatedText.trim() && !isLocalToLocal) { throw new Error('Translation resulted in empty or whitespace text.'); }
