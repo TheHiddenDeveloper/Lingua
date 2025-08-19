@@ -52,7 +52,6 @@ export const GhanaNLPProvider = ({ children }: { children: ReactNode }) => {
     const headers = { ...(options.headers || {}), 'Ocp-Apim-Subscription-Key': apiKeyBasic };
     
     try {
-      // This fetch is for direct API calls from other components, not for initial data loading.
       const response = await fetch(endpoint, { ...options, headers });
       if (!response.ok) {
          let errorResponseMessage = `GhanaNLP API Error: ${response.statusText} (Status: ${response.status})`;
@@ -92,14 +91,12 @@ export const GhanaNLPProvider = ({ children }: { children: ReactNode }) => {
       let speakerData: any = null;
 
       try {
-        // Call the server-side Genkit flows instead of fetching directly
         langData = await getTtsLanguages();
         speakerData = await getTtsSpeakers();
-
-        const apiLanguages = langData.languages || (Array.isArray(langData) ? langData : []);
-        const supportedApiLangCodes = Array.isArray(apiLanguages) 
-          ? apiLanguages.map((lang: any) => (lang.code || lang.name || lang.language || '').toLowerCase()).filter(Boolean) 
-          : [];
+        
+        // The API returns an object like { languages: { tw: "Twi", ... } }
+        const apiLanguagesObject = langData.languages || {};
+        const supportedApiLangCodes = Object.keys(apiLanguagesObject).map(code => code.toLowerCase());
 
         const filteredAppLanguages = PRD_LANGUAGES_SUPPORTED_BY_TTS.filter(prdLang => 
           supportedApiLangCodes.includes(prdLang.apiName.toLowerCase())
@@ -117,19 +114,24 @@ export const GhanaNLPProvider = ({ children }: { children: ReactNode }) => {
             toast({ title: 'Language Config Issue', description: 'Could not find supported TTS languages. Check console for details.', variant: 'warning', duration: 10000 });
         }
         
-        const transformedSpeakers: ApiSpeakersData = {};
+        // The API returns an object like { speakers: { Twi: [...], Ewe: [...] } }
         const rawSpeakers = speakerData.speakers || (typeof speakerData === 'object' && speakerData !== null ? speakerData : {});
+        const transformedSpeakers: ApiSpeakersData = {};
 
         if (typeof rawSpeakers === 'object') {
-            for (const langApiName of Object.keys(rawSpeakers)) {
+            for (const langNameFromApi of Object.keys(rawSpeakers)) {
+                 // Find our app's language definition by matching the API's key (e.g., "Twi")
                  const appLangDef = PRD_LANGUAGES_SUPPORTED_BY_TTS.find(
-                    l => l.name.toLowerCase() === langApiName.toLowerCase() || 
-                         l.apiName.toLowerCase() === langApiName.toLowerCase()
+                    l => l.name.toLowerCase() === langNameFromApi.toLowerCase() || 
+                         l.apiName.toLowerCase() === langNameFromApi.toLowerCase()
                 );
+                
+                // If we support this language, add its speakers
                 if (appLangDef) {
-                    const speakerList = rawSpeakers[langApiName];
+                    const speakerList = rawSpeakers[langNameFromApi];
                     if (Array.isArray(speakerList) && speakerList.every(s => typeof s === 'string')) {
-                         transformedSpeakers[appLangDef.apiName] = speakerList;
+                         // Use our internal code (e.g., "tw") as the key
+                         transformedSpeakers[appLangDef.code] = speakerList;
                     }
                 }
             }
