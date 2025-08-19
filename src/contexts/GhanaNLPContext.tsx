@@ -105,8 +105,8 @@ export const GhanaNLPProvider = ({ children }: { children: ReactNode }) => {
         const speakerResponse = await fetchGhanaNLP('https://translation-api.ghananlp.org/tts/v1/speakers', {});
         speakerData = await speakerResponse.json();
 
+        // Check if langData is an array of objects like [{ name: 'Twi', code: 'tw' }, ...]
         const apiLanguages = langData.languages || (Array.isArray(langData) ? langData : []);
-
         const supportedApiLangCodes = Array.isArray(apiLanguages) 
           ? apiLanguages.map((lang: any) => lang.code || lang.name || lang.language).filter(Boolean) 
           : [];
@@ -114,22 +114,24 @@ export const GhanaNLPProvider = ({ children }: { children: ReactNode }) => {
         const filteredAppLanguages = PRD_LANGUAGES_SUPPORTED_BY_TTS.filter(prdLang => 
           supportedApiLangCodes.includes(prdLang.apiName)
         );
+
         setLanguages(filteredAppLanguages);
 
         if (filteredAppLanguages.length === 0 && PRD_LANGUAGES_SUPPORTED_BY_TTS.length > 0) {
             const prdLangNames = PRD_LANGUAGES_SUPPORTED_BY_TTS.map(l => l.name).join('/');
-            const rawLangDataString = JSON.stringify(langData, null, 2);
-            const langErrorMessage = `App requires ${prdLangNames} for TTS, but no supported languages were found from the API. This is likely an issue with the API key or response format. Raw API language data: \n${rawLangDataString}`;
+            const supportedFromApi = supportedApiLangCodes.join(', ') || '[none reported by API]';
+            const langErrorMessage = `App requires ${prdLangNames} for TTS. API reported supporting: ${supportedFromApi}. Check key validity/permissions or language codes. Ensure 'apiName' in PRD_LANGUAGES_SUPPORTED_BY_TTS matches API codes.`;
             setInitialDataError(langErrorMessage);
             toast({ title: 'Language Config Issue', description: 'Could not find supported TTS languages. Check console for details.', variant: 'warning', duration: 10000 });
         }
         
         const transformedSpeakers: ApiSpeakersData = {};
+        // The API returns an object where keys are language codes and values are speaker lists. e.g. { "tw": ["abena", "yaw"], "ee": [...] }
         const rawSpeakers = speakerData.speakers || (typeof speakerData === 'object' && speakerData !== null ? speakerData : {});
 
         if (typeof rawSpeakers === 'object') {
             for (const langApiName of Object.keys(rawSpeakers)) {
-                const appLangDef = PRD_LANGUAGES_SUPPORTED_BY_TTS.find(
+                 const appLangDef = PRD_LANGUAGES_SUPPORTED_BY_TTS.find(
                     l => l.name.toLowerCase() === langApiName.toLowerCase() || 
                          l.apiName.toLowerCase() === langApiName.toLowerCase()
                 );

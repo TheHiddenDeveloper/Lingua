@@ -12,30 +12,55 @@ import {
   updateProfile,
   sendPasswordResetEmail,
   GoogleAuthProvider,
-  signInWithPopup
+  signInWithRedirect, // Changed from signInWithPopup
+  getRedirectResult // Added to handle redirect result
 } from 'firebase/auth';
 import type { AuthContextType, LoginCredentials, SignupCredentials, UserProfileUpdateData } from '@/types/auth';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(false); // For specific actions like login/logout
-  const [initialLoad, setInitialLoad] = useState(true); // For the initial auth state check
+  const [loading, setLoading] = useState(false);
+  const [initialLoad, setInitialLoad] = useState(true);
   const router = useRouter();
   const { toast } = useToast();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
-      setInitialLoad(false); // Initial auth check is complete
-      setLoading(false); // Also stop general loading
+      if (initialLoad) {
+        // Handle the redirect result from Google Sign-In only on initial load
+        setLoading(true);
+        getRedirectResult(auth)
+          .then((result) => {
+            if (result) {
+              // This is the successfully signed-in user.
+              const user = result.user;
+              toast({ title: 'Signed in with Google', description: `Welcome, ${user.displayName || user.email}!` });
+              router.push('/translate');
+            }
+          })
+          .catch((error) => {
+            console.error("Google Sign-In Redirect Error:", error);
+            let errorMessage = error.message || 'Google Sign-In failed. Please try again.';
+            if (error.code === 'auth/account-exists-with-different-credential') {
+              errorMessage = 'An account already exists with this email using a different sign-in method. Try signing in with that method.';
+            }
+            toast({ title: 'Google Sign-In Error', description: errorMessage, variant: 'destructive' });
+          })
+          .finally(() => {
+            setInitialLoad(false);
+            setLoading(false);
+          });
+      }
     });
+
     return () => unsubscribe();
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run only once on mount
 
   const login = async (credentials: LoginCredentials) => {
     setLoading(true);
@@ -67,21 +92,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
     const provider = new GoogleAuthProvider();
     try {
-      await signInWithPopup(auth, provider);
-      router.push('/translate');
-      toast({ title: 'Signed in with Google', description: 'Successfully signed in with your Google account.' });
+      // We are now initiating a redirect, not a popup.
+      await signInWithRedirect(auth, provider);
+      // The rest of the logic (handling the result) is now in the useEffect hook.
     } catch (error: any) {
-      console.error("Google Sign-In Error:", error);
-      let errorMessage = error.message || 'Google Sign-In failed. Please try again.';
-      if (error.code === 'auth/popup-closed-by-user') {
-          errorMessage = 'The Google Sign-In window was closed before completing the process. Please ensure pop-ups are allowed and try again.';
-      } else if (error.code === 'auth/account-exists-with-different-credential') {
-          errorMessage = 'An account already exists with this email using a different sign-in method. Try signing in with that method.';
-      }
-      toast({ title: 'Google Sign-In Error', description: errorMessage, variant: 'destructive' });
-    } finally {
+      // This catch block will primarily handle errors during the redirect initiation.
+      console.error("Google Sign-In Redirect Initiation Error:", error);
+      toast({ title: 'Sign-In Error', description: 'Could not start the Google Sign-In process. Please try again.', variant: 'destructive' });
       setLoading(false);
     }
+    // No finally setLoading(false) here, as the page will redirect away.
   };
 
   const logout = async () => {
