@@ -65,8 +65,8 @@ const transcribeAudio = ai.defineFlow(
 
       const formData = new FormData();
       // The API expects a file. We create a Blob from the buffer.
-      const audioBlob = new Blob([buffer]);
-      formData.append('file', audioBlob, 'recording.webm'); // Let's assume webm, a common format.
+      const audioBlob = new Blob([buffer], { type: 'audio/wav' });
+      formData.append('file', audioBlob, 'recording.wav'); // Let's assume webm, a common format.
 
       const apiUrl = `https://translation-api.ghananlp.org/asr/v1/transcribe?language=${input.language}`;
       
@@ -90,3 +90,4 @@ const transcribeAudio = ai.defineFlow(
     }
   }
 );
+
