@@ -26,15 +26,15 @@ export default function TextToSpeechPage() {
 
   const { toast } = useToast();
   const { user } = useAuth();
-  const { languages: availableLanguages, speakers: allSpeakers, isLoadingInitialData: isLoadingContextData, initialDataError: contextError, fetchGhanaNLP, getApiKeyBasic, getApiKeyDev } = useGhanaNLP();
+  const { languages: availableLanguages, speakers: allSpeakers, isLoadingInitialData: isLoadingContextData, initialDataError: contextError, fetchGhanaNLP, getApiKeyBasic } = useGhanaNLP();
 
   useEffect(() => { if (contextError) { setPageError(contextError); } else { setPageError(null); } }, [contextError]);
   useEffect(() => { if (availableLanguages.length > 0 && !selectedLanguageCode) { setSelectedLanguageCode(availableLanguages[0].code); } }, [availableLanguages, selectedLanguageCode]);
   useEffect(() => { if (selectedLanguageCode && allSpeakers) { const currentLangObject = availableLanguages.find(lang => lang.code === selectedLanguageCode); const speakersForLang = currentLangObject ? allSpeakers[currentLangObject.apiName] || [] : []; setFilteredSpeakers(speakersForLang); if (speakersForLang.length > 0) { if (!selectedSpeakerId || !speakersForLang.includes(selectedSpeakerId)) { setSelectedSpeakerId(speakersForLang[0]); } } else { setSelectedSpeakerId(''); } } else { setFilteredSpeakers([]); setSelectedSpeakerId(''); } }, [selectedLanguageCode, allSpeakers, availableLanguages, selectedSpeakerId]);
 
   const handleSpeak = async () => {
-    const apiKeyBasic = getApiKeyBasic(); const apiKeyDev = getApiKeyDev();
-    if (!apiKeyBasic && !apiKeyDev) { toast({ title: 'Configuration Error', description: 'GhanaNLP API keys are not configured.', variant: 'destructive' }); setPageError("GhanaNLP API Keys are missing. Please configure them."); return; }
+    const apiKeyBasic = getApiKeyBasic();
+    if (!apiKeyBasic) { toast({ title: 'Configuration Error', description: 'GhanaNLP API key is not configured.', variant: 'destructive' }); setPageError("GhanaNLP API Key is missing. Please configure it."); return; }
     if (!textToSpeak.trim()) { toast({ title: 'Input Required', description: 'Please enter text to speak.', variant: 'destructive' }); return; }
     if (!selectedLanguageCode || !selectedSpeakerId) { toast({ title: 'Selection Required', description: 'Please select a language and a speaker.', variant: 'destructive' }); return; }
     setIsSynthesizing(true); setPageError(null); if (audioSrc) URL.revokeObjectURL(audioSrc); setAudioSrc(null);
